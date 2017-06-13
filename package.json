@@ -1,0 +1,34 @@
+{
+  "name": "ptt.io",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./src",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify src/index.js -t babelify -o dist/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevinptt0323/ptt.io.git"
+  },
+  "keywords": [
+    "ptt",
+    "socket.io"
+  ],
+  "author": "Kevin Lin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kevinptt0323/ptt.io/issues"
+  },
+  "homepage": "https://github.com/kevinptt0323/ptt.io#readme",
+  "dependencies": {
+    "socket.io-client": "^2.0.3"
+  },
+  "devDependencies": {
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babelify": "^7.3.0",
+    "browserify": "^14.4.0"
+  }
+}
