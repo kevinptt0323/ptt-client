@@ -25,9 +25,8 @@
     "iconv-lite": "^0.4.18"
   },
   "devDependencies": {
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-react": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1",
+    "babel-preset-env": "^1.5.2",
+    "babel-preset-stage-1": "^6.24.1",
     "babelify": "^7.3.0",
     "browserify": "^14.4.0"
   }
