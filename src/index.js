@@ -1,11 +1,14 @@
 import { encode, decode } from 'iconv-lite';
 
+const CHARSET = 'big5';
+
 class pttio {
-  constructor(url = 'wss://ws.ptt.cc/bbs') {
-    this.initWS(url);
+  constructor(config) {
+    this.config = config;
+    this.initWS();
   }
-  initWS(url) {
-    const socket = new WebSocket(url);
+  initWS() {
+    const socket = new WebSocket(this.config.url);
     socket.onopen = () => {
       this._onopen();
     };
@@ -13,12 +16,18 @@ class pttio {
     socket.onmessage = (msg) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        this._onmessage(decode(new Uint8Array(e.target.result), 'big5'));
+        const msg = decode(new Uint8Array(e.target.result), this.config.charset);
+        this._onmessage(msg);
       }
       reader.readAsArrayBuffer(msg.data);
     };
 
     this.socket = socket;
+  }
+
+  send(str) {
+    const socket = this.socket;
+    socket.send(encode(str, this.config.charset));
   }
 
   _onopen() {
