@@ -1,9 +1,8 @@
 import EventEmitter from 'eventemitter3';
-import Socket from './socket';
-import { keyboard as key } from './utils';
+import { keyboard as key } from '../../utils';
 
-class pttio extends EventEmitter {
-  constructor(config) {
+class bot extends EventEmitter {
+  constructor(Socket, config) {
     super();
     this._config = config;
     const socket = new Socket(config);
@@ -26,4 +25,4 @@ class pttio extends EventEmitter {
   }
 }
 
-export default pttio;
+export default bot;
