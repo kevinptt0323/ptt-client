@@ -4,11 +4,11 @@ const CHARSET = 'big5';
 
 class socket {
   constructor(config) {
-    this.config = config;
+    this._config = config;
   }
 
   connect() {
-    const socket = new WebSocket(this.config.url);
+    const socket = new WebSocket(this._config.url);
     socket.addEventListener('open', () => {
       this._onconnect();
     });
@@ -16,7 +16,7 @@ class socket {
     socket.addEventListener('message', (msg) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const msg = decode(new Uint8Array(e.target.result), this.config.charset);
+        const msg = decode(new Uint8Array(e.target.result), this._config.charset);
         this._onmessage(msg);
       }
       reader.readAsArrayBuffer(msg.data);
@@ -27,7 +27,7 @@ class socket {
 
   send(str) {
     const socket = this._socket;
-    socket.send(encode(str, this.config.charset));
+    socket.send(encode(str, this._config.charset));
   }
 
   _onconnect() {

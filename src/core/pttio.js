@@ -5,6 +5,7 @@ import { keyboard as key } from './utils';
 class pttio extends EventEmitter {
   constructor(config) {
     super();
+    this._config = config;
     const socket = new Socket(config);
     socket.onconnect = this.emit.bind(this, 'connect');
     socket.onmessage = this.emit.bind(this, 'message');
