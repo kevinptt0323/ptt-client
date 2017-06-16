@@ -1,45 +1,27 @@
-import { encode, decode } from 'iconv-lite';
+import EventEmitter from 'eventemitter3';
+import Socket from './socket';
+import { keyboard as key } from './utils';
 
-const CHARSET = 'big5';
-
-class pttio {
+class pttio extends EventEmitter {
   constructor(config) {
-    this.config = config;
-    this.initWS();
-  }
-  initWS() {
-    const socket = new WebSocket(this.config.url);
-    socket.onopen = () => {
-      this._onopen();
-    };
-
-    socket.onmessage = (msg) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const msg = decode(new Uint8Array(e.target.result), this.config.charset);
-        this._onmessage(msg);
-      }
-      reader.readAsArrayBuffer(msg.data);
-    };
-
-    this.socket = socket;
+    super();
+    const socket = new Socket(config);
+    socket.onconnect = this.emit.bind(this, 'connect');
+    socket.onmessage = this.emit.bind(this, 'message');
+    socket.connect();
+    this.on('message', (msg) => {
+      this.lastmessage = msg;
+    });
+    this._socket = socket;
   }
 
-  send(str) {
-    const socket = this.socket;
-    socket.send(encode(str, this.config.charset));
-  }
-
-  _onopen() {
-    if (typeof this.onmessage === 'function') {
-      this.onopen();
-    }
-  }
-
-  _onmessage(msg) {
-    if (typeof this.onmessage === 'function') {
-      this.onmessage(msg);
-    }
+  async login(username, password) {
+    return new Promise(resolve => {
+      this._socket.send(`${username}${key.Enter}${password}${key.Enter}`);
+      setTimeout(() => {
+        resolve(this.lastmessage);
+      }, 2000);
+    });
   }
 }
 
