@@ -1,7 +1,5 @@
 import { encode, decode } from 'iconv-lite';
 
-const CHARSET = 'big5';
-
 class socket {
   constructor(config) {
     this._config = config;
