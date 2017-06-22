@@ -7,8 +7,8 @@ class bot extends EventEmitter {
   constructor(Socket, config) {
     super();
     this._parser = config.parser;
-    this._term2 = new Terminal2({columns: 80, rows: 24});
-    this.state = {waiting: false};
+    this._term2 = new Terminal2(config.terminal);
+    this._state = bot.initialState;
 
     const socket = new Socket(config);
     socket.onconnect = this.emit.bind(this, 'connect');
@@ -16,21 +16,26 @@ class bot extends EventEmitter {
     socket.connect();
 
     this.on('message', (msg) => {
-      this.state.waiting = false;
+      this._state.waiting = false;
       this._term2.write(msg);
       this.emit('redraw', this._term2.toString());
     });
     this._socket = socket;
   }
 
+  get state() {
+    return {...this._state};
+  }
+
   send(msg, resend=false) {
-    if (resend || !this.state.waiting) {
-      this.state.waiting = true;
+    if (resend || !this._state.waiting) {
+      this._state.waiting = true;
       this._socket.send(msg);
     }
   }
 
   async login(username, password) {
+    if (this._state.login) return;
     this.send(`${username}${key.Enter}${password}${key.Enter}`);
     await this._checkLogin();
     return this._term2.toString();
@@ -60,5 +65,10 @@ class bot extends EventEmitter {
     });
   }
 }
+
+bot.initialState = {
+  waiting: false,
+  login: false,
+};
 
 export default bot;
