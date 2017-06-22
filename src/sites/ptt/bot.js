@@ -3,6 +3,13 @@ import sleep from 'sleep-promise';
 import { keyboard as key } from '../../utils';
 import Terminal2 from 'terminal.js';
 
+const setIntevalUntil = (async (_func, _validate, _inteval) => {
+  await sleep(_inteval);
+  let ret = await _func();
+  if (_validate(ret)) return ret;
+  else return setIntevalUntil(_func, _validate, _inteval);
+});
+
 class bot extends EventEmitter {
   constructor(Socket, config) {
     super();
@@ -37,32 +44,62 @@ class bot extends EventEmitter {
   async login(username, password) {
     if (this._state.login) return;
     this.send(`${username}${key.Enter}${password}${key.Enter}`);
-    await this._checkLogin();
-    return this._term2.toString();
+    let ret = await setIntevalUntil(this._checkLogin.bind(this), ret => ret !== null, 400);
+    if (ret) this._state.login = true;
+    return ret;
   }
 
-  async _checkLogin() {
-    await sleep(1000);
+  _checkLogin() {
     const getLine = this._term2.state.getLine.bind(this._term2.state);
-    if (getLine(21).str.includes("密碼不對或無此帳號。請檢查大小寫及有無輸入錯誤。")) {
+    if (getLine(21).str.includes("密碼不對或無此帳號")) {
       this.emit('login.failed');
+      return false;
     } else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
       this.send(`y${key.Enter}`);
-    } else if (getLine(23).str.includes("請按任意鍵繼續")) {
+    } else if (getLine(23).str.includes("按任意鍵繼續")) {
       this.send(` `);
     } else if (getLine(23).str.includes("您要刪除以上錯誤嘗試的記錄嗎")) {
       this.send(`y${key.Enter}`);
     } else if (getLine(0).str.includes("主功能表")) {
       this.emit('login.success');
-      return;
+      return true;
     }
-    await this._checkLogin();
+    return null;
   }
 
-  async getPosts(boardname, offset=0) {
-    return new Promise(resolve => {
-      this.send(`s${boardname}${key.Enter}`);
-    });
+  async getArticles(boardname, offset=0) {
+    await this.enterBoard(boardname);
+    const getLine = this._term2.state.getLine.bind(this._term2.state);
+    let articles = [];
+    for(let i=3; i<=22; i++) {
+      let line = getLine(i).str;
+      articles.push({
+        id: line.slice(0, 7).trim(),
+        push: line.slice(9, 11).trim(),
+        date: line.slice(11, 16).trim(),
+        author: line.slice(17, 29).trim(),
+        status: line.slice(30, 32).trim(),
+        title: line.slice(32).trim()
+      });
+    }
+    return articles;
+  }
+
+  async enterBoard(boardname) {
+    this.send(`s${boardname}${key.Enter}`);
+    boardname = boardname.charAt(0).toUpperCase() + boardname.slice(1).toLowerCase();
+    return await setIntevalUntil(() => {
+      const getLine = this._term2.state.getLine.bind(this._term2.state);
+      if (0) {
+        // check board exist
+        return false;
+      } else if (getLine(23).str.includes("按任意鍵繼續")) {
+        this.send(` `);
+      } else if (getLine(0).str.includes(`《${boardname}》`)) {
+        return true;
+      }
+      return null;
+    }, ret => {console.log(ret); return (ret !== null);}, 400);
   }
 }
 
