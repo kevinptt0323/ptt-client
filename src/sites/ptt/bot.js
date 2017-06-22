@@ -87,7 +87,7 @@ class bot extends EventEmitter {
 
   async enterBoard(boardname) {
     this.send(`s${boardname}${key.Enter}`);
-    boardname = boardname.charAt(0).toUpperCase() + boardname.slice(1).toLowerCase();
+    boardname = boardname.toLowerCase();
     return await setIntevalUntil(() => {
       const getLine = this._term2.state.getLine.bind(this._term2.state);
       if (0) {
@@ -95,7 +95,7 @@ class bot extends EventEmitter {
         return false;
       } else if (getLine(23).str.includes("按任意鍵繼續")) {
         this.send(` `);
-      } else if (getLine(0).str.includes(`《${boardname}》`)) {
+      } else if (getLine(0).str.toLowerCase().includes(`《${boardname}》`)) {
         return true;
       }
       return null;
