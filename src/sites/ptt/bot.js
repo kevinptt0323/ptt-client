@@ -102,24 +102,21 @@ class bot extends EventEmitter {
       author: getLine(0).str.slice(5, 50).trim(),
       title: getLine(1).str.slice(5).trim(),
       timestamp: getLine(2).str.slice(5).trim(),
-      content: "",
+      lines: [],
     };
 
-    while (!getLine(23).str.includes("100%")) {
-      let line = getLine(5).str;
-      article.content += `${line}\n`;
-      this.send(key.ArrowDown);
-      await sleep(100);
-    }
-    for(let i=6; i<=22; i++) {
-      let line = getLine(i).str;
-      article.content += `${line}\n`;
-    }
+    await setIntevalUntil(() => {
+      for(let i=0; i<23; i++) {
+        article.lines.push(getLine(i).str);
+      }
+      this.send(key.PgDown);
+    }, () => getLine(23).str.includes("100%"), 100);
+
     return article;
   }
 
   async enterBoard(boardname) {
-    this.send(`s${boardname}${key.Enter}`);
+    this.send(`s${boardname}${key.Enter} ${key.End}`);
     boardname = boardname.toLowerCase();
     return await setIntevalUntil(() => {
       const getLine = this._term2.state.getLine.bind(this._term2.state);
