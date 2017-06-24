@@ -112,6 +112,8 @@ class bot extends EventEmitter {
       this.send(key.PgDown);
     }, () => getLine(23).str.includes("100%"), 100);
 
+    this.send(key.ArrowLeft);
+
     return article;
   }
 
