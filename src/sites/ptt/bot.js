@@ -63,6 +63,8 @@ class bot extends EventEmitter {
     } else if (getLine(0).str.includes("主功能表")) {
       this.emit('login.success');
       return true;
+    } else {
+      this.send(`q`);
     }
     return null;
   }
@@ -73,6 +75,8 @@ class bot extends EventEmitter {
     let articles = [];
     for(let i=3; i<=22; i++) {
       let line = getLine(i).str;
+      let delta = (line[16] == " ") ? 0 : 1;
+      line = line.slice(0, 7) + ' '.repeat(delta) + line.slice(7);
       articles.push({
         id: line.slice(0, 7).trim(),
         push: line.slice(9, 11).trim(),
@@ -83,6 +87,35 @@ class bot extends EventEmitter {
       });
     }
     return articles;
+  }
+
+  async getArticle(boardname, aid) {
+    await this.enterBoard(boardname);
+    const getLine = this._term2.state.getLine.bind(this._term2.state);
+
+    this.send(`${aid}${key.Enter}${key.Enter}`);
+
+    await sleep(100);
+
+    let article = {
+      aid,
+      author: getLine(0).str.slice(5, 50).trim(),
+      title: getLine(1).str.slice(5).trim(),
+      timestamp: getLine(2).str.slice(5).trim(),
+      content: "",
+    };
+
+    while (!getLine(23).str.includes("100%")) {
+      let line = getLine(5).str;
+      article.content += `${line}\n`;
+      this.send(key.ArrowDown);
+      await sleep(100);
+    }
+    for(let i=6; i<=22; i++) {
+      let line = getLine(i).str;
+      article.content += `${line}\n`;
+    }
+    return article;
   }
 
   async enterBoard(boardname) {
