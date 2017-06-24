@@ -89,16 +89,16 @@ class bot extends EventEmitter {
     return articles;
   }
 
-  async getArticle(boardname, aid) {
+  async getArticle(boardname, sn) {
     await this.enterBoard(boardname);
     const getLine = this._term2.state.getLine.bind(this._term2.state);
 
-    this.send(`${aid}${key.Enter}${key.Enter}`);
+    this.send(`${sn}${key.Enter}${key.Enter}`);
 
     await sleep(100);
 
     let article = {
-      aid,
+      sn,
       author: getLine(0).str.slice(5, 50).trim(),
       title: getLine(1).str.slice(5).trim(),
       timestamp: getLine(2).str.slice(5).trim(),
