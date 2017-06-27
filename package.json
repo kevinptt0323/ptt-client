@@ -1,5 +1,5 @@
 {
-  "name": "ptt.io",
+  "name": "ptt-client",
   "version": "0.0.1",
   "description": "",
   "main": "./src",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kevinptt0323/ptt.io.git"
+    "url": "git+https://github.com/kevinptt0323/ptt-client.git"
   },
   "keywords": [
     "ptt",
@@ -18,9 +18,9 @@
   "author": "Kevin Lin",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kevinptt0323/ptt.io/issues"
+    "url": "https://github.com/kevinptt0323/ptt-client/issues"
   },
-  "homepage": "https://github.com/kevinptt0323/ptt.io#readme",
+  "homepage": "https://github.com/kevinptt0323/ptt-client#readme",
   "dependencies": {
     "eventemitter3": "^2.0.3",
     "iconv-lite": "^0.4.18",
