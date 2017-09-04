@@ -78,7 +78,7 @@ class bot extends EventEmitter {
       let delta = (line[16] == " ") ? 0 : 1;
       line = line.slice(0, 7) + ' '.repeat(delta) + line.slice(7);
       articles.push({
-        id: line.slice(0, 7).trim(),
+        sn: line.slice(0, 7).trim(),
         push: line.slice(9, 11).trim(),
         date: line.slice(11, 16).trim(),
         author: line.slice(17, 29).trim(),
@@ -127,7 +127,7 @@ class bot extends EventEmitter {
         return false;
       } else if (getLine(23).str.includes("按任意鍵繼續")) {
         this.send(` `);
-      } else if (getLine(0).str.toLowerCase().includes(`《${boardname}》`)) {
+      } else if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
         return true;
       }
       return null;
