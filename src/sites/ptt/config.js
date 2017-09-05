@@ -4,6 +4,8 @@ const config = {
   charset: 'big5',
   origin: 'https://robertabcd.github.io',
   protocol: 'websocket',
+  timeout: 1000,
+  blobSize: 1024,
   terminal: {
     columns: 80,
     rows: 24,

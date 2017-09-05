@@ -20,10 +20,23 @@ class Socket {
       this._onconnect();
     });
 
+    let buffer = "";
+    let timeoutHandler;
     socket.binaryType = "arraybuffer";
     socket.addEventListener('message', (event) => {
-      const msg = decode(new Uint8Array(event.data), this._config.charset);
-      this._onmessage(msg);
+      clearTimeout(timeoutHandler);
+      buffer += decode(new Uint8Array(event.data), this._config.charset);
+      if (event.data.byteLength < this._config.blobSize) {
+        this._onmessage(buffer);
+        buffer = "";
+      } else if (event.data.byteLength === this._config.blobSize) {
+        timeoutHandler = setTimeout(() => {
+          this._onmessage(buffer);
+          buffer = "";
+        }, this._config.timeout);
+      } else if (event.data.byteLength > this._config.blobSize) {
+        throw `Receive message length(${event.data.byteLength}) greater than buffer size(${this._config.blobSize})`;
+      }
     });
 
     this._socket = socket;
