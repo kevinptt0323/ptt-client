@@ -14,7 +14,6 @@ const setIntevalUntil = (async (_func, _validate, _inteval) => {
 
 class Bot extends EventEmitter {
   static initialState = {
-    waiting: false,
     login: false,
   };
   constructor(_config) {
@@ -48,7 +47,6 @@ class Bot extends EventEmitter {
     socket.connect();
 
     this.on('message', (msg) => {
-      this._state.waiting = false;
       this._term2.write(msg);
       this.emit('redraw', this._term2.toString());
     });
@@ -59,17 +57,22 @@ class Bot extends EventEmitter {
     return {...this._state};
   }
 
-  send(msg, resend=false) {
-    if (resend || !this._state.waiting) {
-      this._state.waiting = true;
+  async send(msg) {
+    return new Promise(resolve => {
       this._socket.send(msg);
-    }
+      this.once('message', msg => {
+        resolve(msg);
+      });
+    });
   }
 
   async login(username, password) {
     if (this._state.login) return;
-    this.send(`${username}${key.Enter}${password}${key.Enter}`);
-    let ret = await setIntevalUntil(this._checkLogin.bind(this), ret => ret !== null, 400);
+    await this.send(`${username}${key.Enter}${password}${key.Enter}`);
+    let ret;
+    while ((ret = this._checkLogin()) === null) {
+      await sleep(400);
+    }
     if (ret) this._state.login = true;
     return ret;
   }
@@ -118,9 +121,8 @@ class Bot extends EventEmitter {
     await this.enterBoard(boardname);
     const getLine = this._term2.state.getLine.bind(this._term2.state);
 
-    this.send(`${sn}${key.Enter}${key.Enter}`);
-
-    await sleep(100);
+    await this.send(`${sn}${key.Enter}`);
+    await this.send(`${key.Enter}`);
 
     let article = {
       sn,
@@ -130,33 +132,35 @@ class Bot extends EventEmitter {
       lines: [],
     };
 
-    await setIntevalUntil(() => {
+    for(let i=0; i<23; i++) {
+      article.lines.push(getLine(i).str);
+    }
+
+
+    while (!getLine(23).str.includes("100%")) {
+      await this.send(key.PgDown);
       for(let i=0; i<23; i++) {
         article.lines.push(getLine(i).str);
       }
-      this.send(key.PgDown);
-    }, () => getLine(23).str.includes("100%"), 100);
+    }
 
-    this.send(key.ArrowLeft);
+    await this.send(key.ArrowLeft);
 
     return article;
   }
 
   async enterBoard(boardname) {
-    this.send(`s${boardname}${key.Enter} ${key.End}`);
+    await this.send(`s${boardname}${key.Enter} ${key.End}`);
     boardname = boardname.toLowerCase();
-    return await setIntevalUntil(() => {
-      const getLine = this._term2.state.getLine.bind(this._term2.state);
-      if (0) {
-        // check board exist
-        return false;
-      } else if (getLine(23).str.includes("按任意鍵繼續")) {
-        this.send(` `);
-      } else if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
-        return true;
-      }
-      return null;
-    }, ret => {console.log(ret); return (ret !== null);}, 400);
+    const getLine = this._term2.state.getLine.bind(this._term2.state);
+    
+    if (getLine(23).str.includes("按任意鍵繼續")) {
+      await this.send(` `);
+    }
+    if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
+      return true;
+    }
+    return false;
   }
 }
 
