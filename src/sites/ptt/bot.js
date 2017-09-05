@@ -73,7 +73,10 @@ class Bot extends EventEmitter {
     while ((ret = this._checkLogin()) === null) {
       await sleep(400);
     }
-    if (ret) this._state.login = true;
+    if (ret) {
+      const { _state: state } = this;
+      state.login = true;
+    }
     return ret;
   }
 
@@ -99,6 +102,11 @@ class Bot extends EventEmitter {
 
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
+    offset |= 0;
+    if (offset > 0) {
+      offset = Math.max(offset-9, 1);
+      await this.send(`$$${offset}${key.Enter}`);
+    }
     const getLine = this._term2.state.getLine.bind(this._term2.state);
     let articles = [];
     for(let i=3; i<=22; i++) {
@@ -121,8 +129,7 @@ class Bot extends EventEmitter {
     await this.enterBoard(boardname);
     const getLine = this._term2.state.getLine.bind(this._term2.state);
 
-    await this.send(`${sn}${key.Enter}`);
-    await this.send(`${key.Enter}`);
+    await this.send(`${sn}${key.Enter}${key.Enter}`);
 
     let article = {
       sn,
