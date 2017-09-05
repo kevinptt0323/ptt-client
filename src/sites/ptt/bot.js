@@ -1,7 +1,9 @@
 import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
-import { keyboard as key } from '../../utils';
 import Terminal2 from 'terminal.js';
+import key from '../../utils/keyboard';
+
+import defaultConfig from './config';
 
 const setIntevalUntil = (async (_func, _validate, _inteval) => {
   await sleep(_inteval);
@@ -10,12 +12,35 @@ const setIntevalUntil = (async (_func, _validate, _inteval) => {
   else return setIntevalUntil(_func, _validate, _inteval);
 });
 
-class bot extends EventEmitter {
-  constructor(Socket, config) {
+class Bot extends EventEmitter {
+  static initialState = {
+    waiting: false,
+    login: false,
+  };
+  constructor(_config) {
     super();
+    const config = {...defaultConfig, ..._config};
+
     this._parser = config.parser;
     this._term2 = new Terminal2(config.terminal);
-    this._state = bot.initialState;
+    this._state = { ...Bot.initialState };
+
+    let Socket;
+    switch (config.protocol.toLowerCase()) {
+      case 'websocket':
+      case 'ws':
+      case 'wss':
+        Socket = require("../../core/socket").default;
+        break;
+      case 'telnet':
+      case 'ssh':
+      default:
+        Socket = null;
+    }
+
+    if (Socket === null) {
+      throw `Invalid protocol: ${config.protocol}`;
+    }
 
     const socket = new Socket(config);
     socket.onconnect = this.emit.bind(this, 'connect');
@@ -135,9 +160,4 @@ class bot extends EventEmitter {
   }
 }
 
-bot.initialState = {
-  waiting: false,
-  login: false,
-};
-
-export default bot;
+export default Bot;
