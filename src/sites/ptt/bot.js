@@ -70,32 +70,35 @@ class Bot extends EventEmitter {
     if (this._state.login) return;
     await this.send(`${username}${key.Enter}${password}${key.Enter}`);
     let ret;
-    while ((ret = this._checkLogin()) === null) {
+    while ((ret = await this._checkLogin()) === null) {
       await sleep(400);
     }
     if (ret) {
       const { _state: state } = this;
       state.login = true;
+      state.position = {
+        boardname: "",
+      };
     }
     return ret;
   }
 
-  _checkLogin() {
+  async _checkLogin() {
     const getLine = this._term2.state.getLine.bind(this._term2.state);
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
       this.emit('login.failed');
       return false;
     } else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
-      this.send(`y${key.Enter}`);
+      await this.send(`y${key.Enter}`);
     } else if (getLine(23).str.includes("按任意鍵繼續")) {
-      this.send(` `);
+      await this.send(` `);
     } else if (getLine(23).str.includes("您要刪除以上錯誤嘗試的記錄嗎")) {
-      this.send(`y${key.Enter}`);
+      await this.send(`y${key.Enter}`);
     } else if (getLine(0).str.includes("主功能表")) {
       this.emit('login.success');
       return true;
     } else {
-      this.send(`q`);
+      await this.send(`q`);
     }
     return null;
   }
@@ -162,6 +165,8 @@ class Bot extends EventEmitter {
   }
 
   async enterBoard(boardname) {
+    if (this.state.position.boardname.toLowerCase() === boardname.toLowerCase())
+      return true;
     await this.send(`s${boardname}${key.Enter} ${key.End}`);
     boardname = boardname.toLowerCase();
     const getLine = this._term2.state.getLine.bind(this._term2.state);
@@ -170,6 +175,7 @@ class Bot extends EventEmitter {
       await this.send(` `);
     }
     if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
+      this._state.position.boardname = boardname;
       return true;
     }
     return false;
