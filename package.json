@@ -5,7 +5,7 @@
   "main": "./src",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify dist/main.js -t babelify -o dist/bundle.js",
+    "build": "npm run build:babel",
     "build:babel": "cross-env NODE_ENV=production babel ./src --out-dir ./build"
   },
   "repository": {
@@ -34,8 +34,6 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.5.2",
     "babel-preset-stage-1": "^6.24.1",
-    "babelify": "^7.3.0",
-    "browserify": "^14.4.0",
     "cross-env": "^5.0.5"
   }
 }
