@@ -1,7 +1,13 @@
 import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
-import Terminal2 from 'terminal.js';
+import Terminal2 from 'terminal.js-wcwidth';
+
 import key from '../../utils/keyboard';
+import {
+  getWidth,
+  indexOfWidth,
+  substrWidth,
+} from '../../utils/char';
 
 import defaultConfig from './config';
 
@@ -23,6 +29,7 @@ class Bot extends EventEmitter {
     this._parser = config.parser;
     this._term2 = new Terminal2(config.terminal);
     this._state = { ...Bot.initialState };
+    this._term2.state.setMode('stringWidth', 'dbcs');
 
     let Socket;
     switch (config.protocol.toLowerCase()) {
@@ -114,15 +121,13 @@ class Bot extends EventEmitter {
     let articles = [];
     for(let i=3; i<=22; i++) {
       let line = getLine(i).str;
-      let delta = (line[16] == " ") ? 0 : 1;
-      line = line.slice(0, 7) + ' '.repeat(delta) + line.slice(7);
       articles.push({
-        sn: line.slice(0, 7).trim(),
-        push: line.slice(9, 11).trim(),
-        date: line.slice(11, 16).trim(),
-        author: line.slice(17, 29).trim(),
-        status: line.slice(30, 32).trim(),
-        title: line.slice(32).trim()
+        sn:     substrWidth('dbcs', line, 0,   7).trim(),
+        push:   substrWidth('dbcs', line, 9,   2).trim(),
+        date:   substrWidth('dbcs', line, 11,  5).trim(),
+        author: substrWidth('dbcs', line, 17, 12).trim(),
+        status: substrWidth('dbcs', line, 30,  2).trim(),
+        title:  substrWidth('dbcs', line, 32    ).trim(),
       });
     }
     return articles;
@@ -167,7 +172,7 @@ class Bot extends EventEmitter {
   async enterBoard(boardname) {
     if (this.state.position.boardname.toLowerCase() === boardname.toLowerCase())
       return true;
-    await this.send(`s${boardname}${key.Enter} ${key.End}`);
+    await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
     const getLine = this._term2.state.getLine.bind(this._term2.state);
     
