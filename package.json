@@ -1,7 +1,7 @@
 {
   "name": "ptt-client",
   "version": "0.0.1",
-  "description": "",
+  "description": "A Node client for fetching data from ptt.cc.",
   "main": "./build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -13,6 +13,7 @@
     "url": "git+https://github.com/kevinptt0323/ptt-client.git"
   },
   "keywords": [
+    "bbs",
     "ptt",
     "websocket"
   ],

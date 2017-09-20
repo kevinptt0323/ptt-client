@@ -26,3 +26,6 @@ import pttbot from 'ptt-client';
 ```
 
 ## Development
+```
+npm run build
+```
