@@ -8,5 +8,21 @@ which was supported by [official].
 ## Installation
 
 ## Example
+```js
+import pttbot from 'ptt-client';
+
+(async function() {
+  const ptt = new pttbot();
+
+  if (!await ptt.login('guest', 'guest'))
+    return;
+
+  // get last 20 articles from specific board
+  let articles = await ptt.getArticles('C_Chat');
+
+  // get the content of specific article
+  let article = await ptt.getArticle('C_Chat', articles[0].sn);
+})();
+```
 
 ## Development
