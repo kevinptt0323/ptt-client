@@ -93,6 +93,7 @@ class Bot extends EventEmitter {
       state.position = {
         boardname: "",
       };
+      this.emit('stateChange', this.state);
     }
     return ret;
   }
@@ -190,6 +191,7 @@ class Bot extends EventEmitter {
     }
     if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
       this._state.position.boardname = boardname;
+      this.emit('stateChange', this.state);
       return true;
     }
     return false;
