@@ -141,9 +141,9 @@ class Bot extends EventEmitter {
 
     let article = {
       sn,
-      author: getLine(0).str.slice(5, 50).trim(),
-      title: getLine(1).str.slice(5).trim(),
-      timestamp: getLine(2).str.slice(5).trim(),
+      author:    substrWidth('dbcs', getLine(0).str, 7, 50).trim(),
+      title:     substrWidth('dbcs', getLine(1).str, 7    ).trim(),
+      timestamp: substrWidth('dbcs', getLine(2).str, 7    ).trim(),
       lines: [],
     };
 
