@@ -147,8 +147,10 @@ class Bot extends EventEmitter {
       lines: [],
     };
 
+    article.lines.push(getLine(0).str);
+
     do {
-      for(let i=0; i<23; i++) {
+      for(let i=1; i<23; i++) {
         article.lines.push(getLine(i).str);
       }
       await this.send(key.PgDown);
