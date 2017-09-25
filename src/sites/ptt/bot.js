@@ -22,14 +22,20 @@ class Bot extends EventEmitter {
   static initialState = {
     login: false,
   };
-  constructor(_config) {
+  static forwardEvents = [
+    'connect',
+    'disconnect',
+    'message',
+    'error',
+  ];
+  constructor(config) {
     super();
-    const config = {...defaultConfig, ..._config};
+    config = {...defaultConfig, ...config};
 
     this._parser = config.parser;
-    this._term2 = new Terminal2(config.terminal);
+    this._term = new Terminal2(config.terminal);
     this._state = { ...Bot.initialState };
-    this._term2.state.setMode('stringWidth', 'dbcs');
+    this._term.state.setMode('stringWidth', 'dbcs');
 
     let Socket;
     switch (config.protocol.toLowerCase()) {
@@ -49,13 +55,14 @@ class Bot extends EventEmitter {
     }
 
     const socket = new Socket(config);
-    socket.onconnect = this.emit.bind(this, 'connect');
-    socket.onmessage = this.emit.bind(this, 'message');
     socket.connect();
 
-    this.on('message', (msg) => {
-      this._term2.write(msg);
-      this.emit('redraw', this._term2.toString());
+    Bot.forwardEvents.forEach(e => {
+      socket.on(e, this.emit.bind(this, e));
+    });
+    socket.on('message', (msg) => {
+      this._term.write(msg);
+      this.emit('redraw', this._term.toString());
     });
     this._socket = socket;
   }
@@ -91,7 +98,7 @@ class Bot extends EventEmitter {
   }
 
   async _checkLogin() {
-    const getLine = this._term2.state.getLine.bind(this._term2.state);
+    const getLine = this._term.state.getLine.bind(this._term.state);
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
       this.emit('login.failed');
       return false;
@@ -117,7 +124,7 @@ class Bot extends EventEmitter {
       offset = Math.max(offset-9, 1);
       await this.send(`$$${offset}${key.Enter}`);
     }
-    const getLine = this._term2.state.getLine.bind(this._term2.state);
+    const getLine = this._term.state.getLine.bind(this._term.state);
     let articles = [];
     for(let i=3; i<=22; i++) {
       let line = getLine(i).str;
@@ -135,7 +142,7 @@ class Bot extends EventEmitter {
 
   async getArticle(boardname, sn) {
     await this.enterBoard(boardname);
-    const getLine = this._term2.state.getLine.bind(this._term2.state);
+    const getLine = this._term.state.getLine.bind(this._term.state);
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
@@ -176,7 +183,7 @@ class Bot extends EventEmitter {
       return true;
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
-    const getLine = this._term2.state.getLine.bind(this._term2.state);
+    const getLine = this._term.state.getLine.bind(this._term.state);
     
     if (getLine(23).str.includes("按任意鍵繼續")) {
       await this.send(` `);

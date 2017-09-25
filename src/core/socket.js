@@ -1,8 +1,10 @@
+import EventEmitter from 'eventemitter3';
 import { encode, decode } from 'iconv-lite';
 import ws from 'ws';
 
-class Socket {
+class Socket extends EventEmitter {
   constructor(config) {
+    super();
     this._config = config;
   }
 
@@ -16,26 +18,26 @@ class Socket {
         options.origin = this._config.origin;
       socket = new ws(this._config.url, options);
     }
-    socket.addEventListener('open', () => {
-      this._onconnect();
-    });
+    socket.addEventListener('open',  this.emit.bind(this, 'connect'));
+    socket.addEventListener('close', this.emit.bind(this, 'disconnect'));
+    socket.addEventListener('error', this.emit.bind(this, 'error'));
 
     let buffer = "";
     let timeoutHandler;
     socket.binaryType = "arraybuffer";
-    socket.addEventListener('message', (event) => {
+    socket.addEventListener('message', ({ data }) => {
       clearTimeout(timeoutHandler);
-      buffer += decode(new Uint8Array(event.data), this._config.charset);
-      if (event.data.byteLength < this._config.blobSize) {
-        this._onmessage(buffer);
+      buffer += decode(new Uint8Array(data), this._config.charset);
+      if (data.byteLength < this._config.blobSize) {
+        this.emit('message', buffer);
         buffer = "";
-      } else if (event.data.byteLength === this._config.blobSize) {
+      } else if (data.byteLength === this._config.blobSize) {
         timeoutHandler = setTimeout(() => {
-          this._onmessage(buffer);
+          this.emit('message', buffer);
           buffer = "";
         }, this._config.timeout);
-      } else if (event.data.byteLength > this._config.blobSize) {
-        throw `Receive message length(${event.data.byteLength}) greater than buffer size(${this._config.blobSize})`;
+      } else if (data.byteLength > this._config.blobSize) {
+        throw new Error(`Receive message length(${data.byteLength}) greater than buffer size(${this._config.blobSize})`);
       }
     });
 
@@ -45,18 +47,6 @@ class Socket {
   send(str) {
     const socket = this._socket;
     socket.send(encode(str, this._config.charset));
-  }
-
-  _onconnect() {
-    if (typeof this.onconnect === 'function') {
-      this.onconnect();
-    }
-  }
-
-  _onmessage(msg) {
-    if (typeof this.onmessage === 'function') {
-      this.onmessage(msg);
-    }
   }
 }
 
