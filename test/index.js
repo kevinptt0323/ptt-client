@@ -1,5 +1,5 @@
 const tests = [
-  './login.js',
+  './connection.js',
   './articles.js',
   './favorite.js',
 ];
