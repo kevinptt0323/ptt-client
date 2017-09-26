@@ -1,6 +1,7 @@
 const tests = [
   './login.js',
-  './basic.js',
+  './articles.js',
+  './favorite.js',
 ];
 
 tests.forEach(test => {
