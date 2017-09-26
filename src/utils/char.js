@@ -54,7 +54,7 @@ export function substrWidth(widthType, str, startWidth, width) {
 		start = indexOfWidth(widthType, str, startWidth);
 		if (getWidth(widthType, str.substr(0, start)) < startWidth) {
 			start++;
-			prefixSpace = getWidth(widthType, str.substr(0, start)) - startWidth;
+			prefixSpace = Math.max(getWidth(widthType, str.substr(0, start)) - startWidth, 0);
 		}
 		length = indexOfWidth(widthType, str.substr(start), width - prefixSpace);
 		suffixSpace = Math.min(width, getWidth(widthType, str.substr(start))) -
