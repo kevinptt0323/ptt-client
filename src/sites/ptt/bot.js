@@ -183,12 +183,64 @@ class Bot extends EventEmitter {
     return article;
   }
 
+  async getFavorite() {
+    await this.enterFavorite();
+    const { getLine } = this;
+
+    const favorites = [];
+
+    for(let i=3; i<23; i++) {
+      let line = getLine(i).str;
+      if (line.trim() === '') break;
+      let favorite = {
+        bn:        substrWidth('dbcs', line,  3,  4).trim() | 0,
+        read:      substrWidth('dbcs', line,  8,  2).trim() === '',
+        boardname: substrWidth('dbcs', line, 10, 12).trim(),
+        category:  substrWidth('dbcs', line, 23,  4).trim(),
+        title:     substrWidth('dbcs', line, 30, 31),
+        users:     substrWidth('dbcs', line, 62,  5).trim(),
+        admin:     substrWidth('dbcs', line, 67    ).trim(),
+        folder:    false,
+        divider:   false,
+      };
+      switch (favorite.boardname) {
+        case 'MyFavFolder':
+          favorite = {
+            ...favorite,
+            title:  substrWidth('dbcs', line, 30),
+            users: '',
+            admin: '',
+            folder: true,
+          };
+          break;
+        case '------------':
+          favorite = {
+            ...favorite,
+            title:  substrWidth('dbcs', line, 30),
+            users: '',
+            admin: '',
+            divider: true,
+          };
+          break;
+        default:
+          break;
+      }
+      favorites.push(favorite);
+    }
+    return favorites;
+  }
+
+  async enter() {
+    await this.send(`${key.ArrowLeft.repeat(10)}`);
+    return true;
+  }
+
   async enterBoard(boardname) {
     if (this.state.position.boardname.toLowerCase() === boardname.toLowerCase())
       return true;
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
-    const getLine = this._term.state.getLine.bind(this._term.state);
+    const { getLine } = this;
     
     if (getLine(23).str.includes("按任意鍵繼續")) {
       await this.send(` `);
@@ -199,6 +251,12 @@ class Bot extends EventEmitter {
       return true;
     }
     return false;
+  }
+
+  async enterFavorite() {
+    await this.enter();
+    await this.send(`F${key.Enter}`);
+    return true;
   }
 }
 
