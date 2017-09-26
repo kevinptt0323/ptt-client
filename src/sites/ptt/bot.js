@@ -71,6 +71,10 @@ class Bot extends EventEmitter {
     return {...this._state};
   }
 
+  getLine = (n) => {
+    return this._term.state.getLine(n);
+  };
+
   async send(msg) {
     return new Promise(resolve => {
       this._socket.send(msg);
@@ -99,7 +103,7 @@ class Bot extends EventEmitter {
   }
 
   async _checkLogin() {
-    const getLine = this._term.state.getLine.bind(this._term.state);
+    const { getLine } = this;
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
       this.emit('login.failed');
       return false;
@@ -125,7 +129,7 @@ class Bot extends EventEmitter {
       offset = Math.max(offset-9, 1);
       await this.send(`$$${offset}${key.Enter}`);
     }
-    const getLine = this._term.state.getLine.bind(this._term.state);
+    const { getLine } = this;
     let articles = [];
     for(let i=3; i<=22; i++) {
       let line = getLine(i).str;
@@ -143,7 +147,7 @@ class Bot extends EventEmitter {
 
   async getArticle(boardname, sn) {
     await this.enterBoard(boardname);
-    const getLine = this._term.state.getLine.bind(this._term.state);
+    const { getLine } = this;
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
