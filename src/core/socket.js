@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3';
-import { encode, decode } from 'iconv-lite';
+import { encodeSync as encode, decodeSync as decode } from 'uao-js';
 
 class Socket extends EventEmitter {
   constructor(config) {
@@ -22,19 +22,19 @@ class Socket extends EventEmitter {
     socket.addEventListener('close', this.emit.bind(this, 'disconnect'));
     socket.addEventListener('error', this.emit.bind(this, 'error'));
 
-    let buffer = "";
+    let buffer = '';
     let timeoutHandler;
     socket.binaryType = "arraybuffer";
     socket.addEventListener('message', ({ data }) => {
       clearTimeout(timeoutHandler);
-      buffer += decode(new Uint8Array(data), this._config.charset);
+      buffer += String.fromCharCode(...new Uint8Array(data));
       if (data.byteLength < this._config.blobSize) {
-        this.emit('message', buffer);
-        buffer = "";
+        this.emit('message', decode(buffer));
+        buffer = '';
       } else if (data.byteLength === this._config.blobSize) {
         timeoutHandler = setTimeout(() => {
-          this.emit('message', buffer);
-          buffer = "";
+          this.emit('message', decode(buffer));
+          buffer = '';
         }, this._config.timeout);
       } else if (data.byteLength > this._config.blobSize) {
         throw new Error(`Receive message length(${data.byteLength}) greater than buffer size(${this._config.blobSize})`);
@@ -46,7 +46,7 @@ class Socket extends EventEmitter {
 
   send(str) {
     const socket = this._socket;
-    socket.send(encode(str, this._config.charset));
+    socket.send(Buffer.from(encode(str)));
   }
 }
 
