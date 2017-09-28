@@ -236,8 +236,7 @@ class Bot extends EventEmitter {
   }
 
   async enterBoard(boardname) {
-    if (this.state.position.boardname.toLowerCase() === boardname.toLowerCase())
-      return true;
+    await this.enter();
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
     const { getLine } = this;
