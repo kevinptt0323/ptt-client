@@ -1,6 +1,5 @@
 import EventEmitter from 'eventemitter3';
 import { encode, decode } from 'iconv-lite';
-import ws from 'ws';
 
 class Socket extends EventEmitter {
   constructor(config) {
@@ -16,6 +15,7 @@ class Socket extends EventEmitter {
       const options = {};
       if (this._config.origin)
         options.origin = this._config.origin;
+      const ws = require('ws');
       socket = new ws(this._config.url, options);
     }
     socket.addEventListener('open',  this.emit.bind(this, 'connect'));
