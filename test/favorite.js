@@ -28,7 +28,7 @@ describe('Favorite', () => {
       await logout(ptt);
     });
     it('should get favorite list', async () => {
-      let favorites = await ptt.getFavorite('C_Chat');
+      let favorites = await ptt.getFavorite();
       assert(favorites.length>0);
 
       favorites.forEach(favorite => {
