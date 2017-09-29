@@ -43,8 +43,8 @@ describe('Articles', () => {
       });
     });
     it('should get correct article list with offset argument', async() => {
-      let articles2 = await ptt.getArticles('C_Chat', articles[0].sn-1);
-      assert.equal(articles2[articles2.length-1].sn, articles[0].sn-1);
+      let articles2 = await ptt.getArticles('C_Chat', articles[articles.length-1].sn-1);
+      assert.equal(articles2[0].sn, articles[articles.length-1].sn-1);
     });
   });
 
@@ -56,13 +56,13 @@ describe('Articles', () => {
       await logout(ptt);
     });
     it('should get correct article from board', async () => {
-      const article = await ptt.getArticle('C_Chat', 30000);
+      const article = await ptt.getArticle('Gossiping', 100000);
       assert('sn' in article);
       assert('author' in article);
       assert('title' in article);
       assert('timestamp' in article);
       assert('lines' in article);
-      assert.strictEqual(article.sn, 30000);
+      assert.strictEqual(article.sn, 100000);
     });
   });
 });

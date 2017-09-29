@@ -157,7 +157,7 @@ class Bot extends EventEmitter {
       articles[i].sn = articles[i-1].sn+1;
     }
     await this.enterIndex();
-    return articles;
+    return articles.reverse();
   }
 
   async getArticle(boardname, sn) {
