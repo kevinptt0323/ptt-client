@@ -161,12 +161,12 @@ class Bot extends EventEmitter {
 
     article.lines.push(getLine(0).str);
 
-    do {
+    while (!getLine(23).str.includes("100%")) {
       for(let i=1; i<23; i++) {
         article.lines.push(getLine(i).str);
       }
       await this.send(key.PgDown);
-    } while (!getLine(23).str.includes("100%"));
+    }
 
     const lastLine = article.lines[article.lines.length-1];
     for(let i=0; i<23; i++) {
