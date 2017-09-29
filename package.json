@@ -2,11 +2,11 @@
   "name": "ptt-client",
   "version": "0.1.0",
   "description": "A Node client for fetching data from ptt.cc.",
-  "main": "./build/index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "test": "mocha ./test/index.js",
     "build": "npm run build:babel",
-    "build:babel": "cross-env NODE_ENV=production babel ./src --out-dir ./build"
+    "build:babel": "cross-env NODE_ENV=production babel ./src --out-dir ./dist"
   },
   "repository": {
     "type": "git",
