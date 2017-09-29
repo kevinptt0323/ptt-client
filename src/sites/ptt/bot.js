@@ -132,15 +132,29 @@ class Bot extends EventEmitter {
     const { getLine } = this;
     let articles = [];
     for(let i=3; i<=22; i++) {
-      let line = getLine(i).str;
-      articles.push({
-        sn:     substrWidth('dbcs', line, 0,   7).trim(),
+      const line = getLine(i).str;
+      const article = {
+        sn:     substrWidth('dbcs', line, 1,   7).trim()|0,
         push:   substrWidth('dbcs', line, 9,   2).trim(),
         date:   substrWidth('dbcs', line, 11,  5).trim(),
         author: substrWidth('dbcs', line, 17, 12).trim(),
         status: substrWidth('dbcs', line, 30,  2).trim(),
         title:  substrWidth('dbcs', line, 32    ).trim(),
-      });
+        fixed:  substrWidth('dbcs', line, 1,   7).trim().includes('★'),
+      };
+      articles.push(article);
+    }
+    // fix sn
+    if (articles.length >= 2 && articles[0].sn === 0) {
+      for(let i=1; i<articles.length; i++) {
+        if (articles[i].sn !== 0) {
+          articles[0].sn = articles[i].sn - i;
+          break;
+        }
+      }
+    }
+    for(let i=1; i<articles.length; i++) {
+      articles[i].sn = articles[i-1].sn+1;
     }
     return articles;
   }
