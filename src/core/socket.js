@@ -9,14 +9,15 @@ class Socket extends EventEmitter {
 
   connect() {
     let socket;
-    if (typeof WebSocket !== "undefined") {
+    if (typeof WebSocket === 'undefined') {
+      throw new Error(`'WebSocket' is undefined. Have you ever include any websocket polyfill?`);
+    } else if (WebSocket.length === 1) {
       socket = new WebSocket(this._config.url);
     } else {
       const options = {};
       if (this._config.origin)
         options.origin = this._config.origin;
-      const ws = require('ws');
-      socket = new ws(this._config.url, options);
+      socket = new WebSocket(this._config.url, options);
     }
     socket.addEventListener('open',  this.emit.bind(this, 'connect'));
     socket.addEventListener('close', this.emit.bind(this, 'disconnect'));

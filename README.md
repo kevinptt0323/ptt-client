@@ -14,10 +14,14 @@ npm install ptt-client
 
 ## Example
 ```js
-import pttbot from 'ptt-client';
+import PTT from 'ptt-client';
+
+// if you are using this module in node.js, 'ws' is required as WebSocket polyfill.
+// you don't need this in modern browsers
+global.WebSocket = require('ws');
 
 (async function() {
-  const ptt = new pttbot();
+  const ptt = new PTT();
 
   if (!await ptt.login('guest', 'guest'))
     return;
