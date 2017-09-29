@@ -14,21 +14,23 @@ describe('Connection', () => {
   describe('login', () => {
     it('should login success with correct username and password', () => {
       const ptt = new pttbot();
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         ptt.once('connect', () => {
           ptt.login(username, password)
             .then(ret => assert.strictEqual(ret, true))
-            .then(resolve);
+            .then(resolve)
+            .catch(reject);
         });
       });
     });
     it('should login failed with wrong username and password', () => {
       const ptt = new pttbot();
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         ptt.once('connect', () => {
           ptt.login('wronguser', 'wrongpass')
             .then(ret => assert.strictEqual(ret, false))
-            .then(resolve);
+            .then(resolve)
+            .catch(reject);
         });
       });
     });
