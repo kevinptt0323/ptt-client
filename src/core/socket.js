@@ -28,15 +28,11 @@ class Socket extends EventEmitter {
     socket.addEventListener('message', ({ data }) => {
       clearTimeout(timeoutHandler);
       buffer += String.fromCharCode(...new Uint8Array(data));
-      if (data.byteLength < this._config.blobSize) {
+      timeoutHandler = setTimeout(() => {
         this.emit('message', decode(buffer));
         buffer = '';
-      } else if (data.byteLength === this._config.blobSize) {
-        timeoutHandler = setTimeout(() => {
-          this.emit('message', decode(buffer));
-          buffer = '';
-        }, this._config.timeout);
-      } else if (data.byteLength > this._config.blobSize) {
+      }, this._config.timeout);
+      if (data.byteLength > this._config.blobSize) {
         throw new Error(`Receive message length(${data.byteLength}) greater than buffer size(${this._config.blobSize})`);
       }
     });
