@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
-import Terminal2 from 'terminal.js-wcwidth';
+import Terminal from 'terminal.js';
 
 import key from '../../utils/keyboard';
 import {
@@ -33,7 +33,7 @@ class Bot extends EventEmitter {
     config = {...defaultConfig, ...config};
 
     this._parser = config.parser;
-    this._term = new Terminal2(config.terminal);
+    this._term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
     this._term.state.setMode('stringWidth', 'dbcs');
 
