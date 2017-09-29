@@ -21,11 +21,15 @@ import pttbot from 'ptt-client';
   let articles = await ptt.getArticles('C_Chat');
 
   // get the content of specific article
-  let article = await ptt.getArticle('C_Chat', articles[0].sn);
+  let article = await ptt.getArticle('C_Chat', articles[articles.length-1].sn);
+
+  // get your favorite list
+  let favorites = await ptt.getFavorite()
 })();
 ```
 
 ## Development
 ```
+npm run test
 npm run build
 ```
