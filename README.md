@@ -1,11 +1,16 @@
 # ptt-client
-ptt-client is a Node client for fetching data from the famous BBS,
-[ptt.cc](https://www.ptt.cc), in Taiwan. This client is based on WebSocket,
-which was supported by [official].
+**ptt-client** is an unofficial client to fetch data from PTT ([ptt.cc]), the
+famous BBS in Taiwan, over WebSocket. This module works in browser and Node.js.
 
-[official]: https://www.ptt.cc/bbs/Gossiping/M.1496578018.A.650.html
+PTT supports connection with WebSocket by [official].
+
+[ptt.cc]: https://www.ptt.cc
+[official]: https://www.ptt.cc/bbs/SYSOP/M.1496571808.A.608.html
 
 ## Installation
+```
+npm install ptt-client
+```
 
 ## Example
 ```js
@@ -24,7 +29,7 @@ import pttbot from 'ptt-client';
   let article = await ptt.getArticle('C_Chat', articles[articles.length-1].sn);
 
   // get your favorite list
-  let favorites = await ptt.getFavorite()
+  let favorites = await ptt.getFavorite();
 })();
 ```
 
