@@ -127,14 +127,14 @@ class Bot extends EventEmitter {
     offset |= 0;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
-      await this.send(`$$${offset}${key.Enter}`);
+      await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
     }
     const { getLine } = this;
     let articles = [];
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
       const article = {
-        sn:     substrWidth('dbcs', line, 1,   7).trim()|0,
+        sn:     substrWidth('dbcs', line, 1,   7).trim() | 0,
         push:   substrWidth('dbcs', line, 9,   2).trim(),
         date:   substrWidth('dbcs', line, 11,  5).trim(),
         author: substrWidth('dbcs', line, 17, 12).trim(),
@@ -156,6 +156,7 @@ class Bot extends EventEmitter {
     for(let i=1; i<articles.length; i++) {
       articles[i].sn = articles[i-1].sn+1;
     }
+    await this.enterIndex();
     return articles;
   }
 
@@ -192,8 +193,7 @@ class Bot extends EventEmitter {
       }
     }
 
-    await this.send(key.ArrowLeft);
-
+    await this.enterIndex();
     return article;
   }
 
@@ -241,16 +241,17 @@ class Bot extends EventEmitter {
       }
       favorites.push(favorite);
     }
+
+    await this.enterIndex();
     return favorites;
   }
 
-  async enter() {
+  async enterIndex() {
     await this.send(`${key.ArrowLeft.repeat(10)}`);
     return true;
   }
 
   async enterBoard(boardname) {
-    await this.enter();
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
     const { getLine } = this;
@@ -267,7 +268,6 @@ class Bot extends EventEmitter {
   }
 
   async enterFavorite() {
-    await this.enter();
     await this.send(`F${key.Enter}`);
     return true;
   }
