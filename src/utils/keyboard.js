@@ -9,6 +9,7 @@ export default {
   Home: '\x1b[1~',
   End: '\x1b[4~',
   Backspace: '\b',
-  CtrlZ: '\x1a',
   CtrlP: '\x10',
+  CtrlU: '\x15',
+  CtrlZ: '\x1a',
 };

@@ -32,7 +32,6 @@ class Bot extends EventEmitter {
     super();
     config = {...defaultConfig, ...config};
 
-    this._parser = config.parser;
     this._term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
     this._term.state.setMode('stringWidth', 'dbcs');
@@ -64,7 +63,8 @@ class Bot extends EventEmitter {
       this._term.write(msg);
       this.emit('redraw', this._term.toString());
     });
-    this._socket = socket;
+    this.socket = socket;
+    this.config = config;
   }
 
   get state() {
@@ -76,12 +76,20 @@ class Bot extends EventEmitter {
   };
 
   async send(msg) {
+    this.config.preventIdle && this.preventIdle();
     return new Promise(resolve => {
-      this._socket.send(msg);
+      this.socket.send(msg);
       this.once('message', msg => {
         resolve(msg);
       });
     });
+  }
+
+  preventIdle(timeout = 60) {
+    clearTimeout(this.preventIdleHandler);
+    this.preventIdleHandler = setTimeout(() => {
+      this.send(`${key.CtrlU}${key.ArrowLeft}`);
+    }, timeout * 1000);
   }
 
   async login(username, password) {
