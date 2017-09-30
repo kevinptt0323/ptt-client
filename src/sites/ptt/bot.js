@@ -59,10 +59,16 @@ class Bot extends EventEmitter {
     Bot.forwardEvents.forEach(e => {
       socket.on(e, this.emit.bind(this, e));
     });
-    socket.on('message', (msg) => {
-      this._term.write(msg);
-      this.emit('redraw', this._term.toString());
-    });
+    socket
+      .on('message', (msg) => {
+        this._term.write(msg);
+        this.emit('redraw', this._term.toString());
+      })
+      .on('disconnect', (close) => {
+      })
+      .on('error', (err) => {
+        console.log(err);
+      });
     this.socket = socket;
     this.config = config;
   }
@@ -112,16 +118,20 @@ class Bot extends EventEmitter {
 
   async _checkLogin() {
     const { getLine } = this;
+
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
+    } else if ((getLine(22).str+getLine(23).str).toLowerCase().includes("y/n")) {
+    //} else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
       await this.send(`y${key.Enter}`);
+    } else if (getLine(23).str.includes("請勿頻繁登入以免造成系統過度負荷")) {
+      await this.send(`${key.Enter}`);
     } else if (getLine(23).str.includes("按任意鍵繼續")) {
-      await this.send(` `);
+      await this.send(`${key.Enter}`);
     } else if (getLine(23).str.includes("您要刪除以上錯誤嘗試的記錄嗎")) {
       await this.send(`y${key.Enter}`);
-    } else if (getLine(0).str.includes("主功能表")) {
+    } else if (getLine(23).str.includes("我是")) {
       this.emit('login.success');
       return true;
     } else {
