@@ -1,6 +1,6 @@
 {
   "name": "ptt-client",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A Node client for fetching data from ptt.cc.",
   "main": "./dist/index.js",
   "scripts": {
