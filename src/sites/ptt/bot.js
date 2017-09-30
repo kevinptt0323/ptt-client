@@ -100,7 +100,8 @@ class Bot extends EventEmitter {
 
   async login(username, password) {
     if (this._state.login) return;
-    await this.send(`${username}${key.Enter}${password}${key.Enter}`);
+    username = username.replace(/,/g, '');
+    await this.send(`${username},${key.Enter}${password}${key.Enter}`);
     let ret;
     while ((ret = await this._checkLogin()) === null) {
       await sleep(400);

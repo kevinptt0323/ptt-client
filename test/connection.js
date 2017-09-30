@@ -34,5 +34,16 @@ describe('Connection', () => {
         });
       });
     });
+    it('should login success with correct username (w/ trailing comma) and password', () => {
+      const ptt = new pttbot();
+      return new Promise((resolve, reject) => {
+        ptt.once('connect', () => {
+          ptt.login(username + ',', password)
+            .then(ret => assert.strictEqual(ret, true))
+            .then(resolve)
+            .catch(reject);
+        });
+      });
+    });
   });
 });
