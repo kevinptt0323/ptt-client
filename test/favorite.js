@@ -9,12 +9,10 @@ const newbot = async () => {
     ptt.once('connect', resolve);
   }))();
   const ret = await ptt.login(username, password)
-  assert.strictEqual(ret, true);
+  if (!ret) {
+    throw 'login failed';
+  }
   return ptt;
-};
-
-const logout = async (ptt) => {
-  await ptt.send(`${key.ArrowLeft.repeat(10)}${key.ArrowRight}y${key.Enter}`);
 };
 
 describe('Favorite', () => {
@@ -25,7 +23,7 @@ describe('Favorite', () => {
       ptt = await newbot();
     });
     after('logout', async () => {
-      await logout(ptt);
+      await ptt.logout();
     });
     it('should get favorite list', async () => {
       let favorites = await ptt.getFavorite();

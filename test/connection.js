@@ -17,7 +17,10 @@ describe('Connection', () => {
       return new Promise((resolve, reject) => {
         ptt.once('connect', () => {
           ptt.login(username, password)
-            .then(ret => assert.strictEqual(ret, true))
+            .then(ret => {
+              assert.strictEqual(ret, true);
+              assert.strictEqual(ptt.state.login, true);
+            })
             .then(resolve)
             .catch(reject);
         });
@@ -28,7 +31,10 @@ describe('Connection', () => {
       return new Promise((resolve, reject) => {
         ptt.once('connect', () => {
           ptt.login('wronguser', 'wrongpass')
-            .then(ret => assert.strictEqual(ret, false))
+            .then(ret => {
+              assert.strictEqual(ret, false);
+              assert.strictEqual(ptt.state.login, false);
+            })
             .then(resolve)
             .catch(reject);
         });
@@ -45,5 +51,21 @@ describe('Connection', () => {
         });
       });
     });
+  });
+  describe('logout', () => {
+    it('should logout successfully if user is login', () => {
+      const ptt = new pttbot();
+      return new Promise((resolve, reject) => {
+        ptt.once('connect', async () => {
+          if (!await ptt.login(username, password)) {
+            reject();
+          }
+          const ret = await ptt.logout();
+          assert.strictEqual(ret, true);
+          assert.strictEqual(ptt.state.login, false);
+          resolve();
+        });
+      });
+    })
   });
 });

@@ -117,6 +117,14 @@ class Bot extends EventEmitter {
     return ret;
   }
 
+  async logout() {
+    if (!this._state.login) return;
+    await this.send(`${key.ArrowLeft.repeat(10)}${key.ArrowRight}y${key.Enter}`);
+    this._state.login = false;
+    this.emit('stateChange', this.state);
+    return true;
+  }
+
   async _checkLogin() {
     const { getLine } = this;
 
