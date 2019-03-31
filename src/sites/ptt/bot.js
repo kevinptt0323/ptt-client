@@ -284,6 +284,27 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
+  async getMails() {
+    await this.enterMail();
+    const { getLine } = this;
+
+    let mails = [];
+    for(let i=3; i<=22; i++) {
+      const line = getLine(i).str;
+      const mail = {
+        sn:     substrWidth('dbcs', line, 1,   5).trim() | 0,
+        date:   substrWidth('dbcs', line, 9,   5).trim(),
+        author: substrWidth('dbcs', line, 15, 12).trim(),
+        status: substrWidth('dbcs', line, 30,  2).trim(),
+        title:  substrWidth('dbcs', line, 33    ).trim(),
+      };
+      mails.push(mail);
+    }
+
+    await this.enterIndex();
+    return mails.reverse();
+  }
+
   async enterIndex() {
     await this.send(`${key.ArrowLeft.repeat(10)}`);
     return true;
@@ -307,6 +328,11 @@ class Bot extends EventEmitter {
 
   async enterFavorite() {
     await this.send(`F${key.Enter}`);
+    return true;
+  }
+
+  async enterMail() {
+    await this.send(`M${key.Enter}R${key.Enter}`);
     return true;
   }
 }
