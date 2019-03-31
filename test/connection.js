@@ -6,7 +6,7 @@ describe('Connection', () => {
   describe('connect', () => {
     it('should connect to server', () => {
       const ptt = new pttbot();
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         ptt.once('connect', resolve);
       });
     });
@@ -15,39 +15,45 @@ describe('Connection', () => {
     it('should login success with correct username and password', () => {
       const ptt = new pttbot();
       return new Promise((resolve, reject) => {
-        ptt.once('connect', () => {
-          ptt.login(username, password)
-            .then(ret => {
-              assert.strictEqual(ret, true);
-              assert.strictEqual(ptt.state.login, true);
-            })
-            .then(resolve)
-            .catch(reject);
+        ptt.once('connect', async () => {
+          try {
+            const ret = await ptt.login(username, password);
+            assert.strictEqual(ret, true);
+            assert.strictEqual(ptt.state.login, true);
+          } catch (e) {
+            reject(e);
+          }
+          resolve();
         });
       });
     });
     it('should login failed with wrong username and password', () => {
       const ptt = new pttbot();
       return new Promise((resolve, reject) => {
-        ptt.once('connect', () => {
-          ptt.login('wronguser', 'wrongpass')
-            .then(ret => {
-              assert.strictEqual(ret, false);
-              assert.strictEqual(ptt.state.login, false);
-            })
-            .then(resolve)
-            .catch(reject);
+        ptt.once('connect', async () => {
+          try {
+            const ret = await ptt.login('wronguser', 'wrongpass');
+            assert.strictEqual(ret, false);
+            assert.strictEqual(ptt.state.login, false);
+          } catch (e) {
+            reject(e);
+          }
+          resolve();
         });
       });
     });
     it('should login success with correct username (w/ trailing comma) and password', () => {
       const ptt = new pttbot();
       return new Promise((resolve, reject) => {
-        ptt.once('connect', () => {
-          ptt.login(username + ',', password)
-            .then(ret => assert.strictEqual(ret, true))
-            .then(resolve)
-            .catch(reject);
+        ptt.once('connect', async () => {
+          try {
+            const ret = await ptt.login(username + ',', password);
+            assert.strictEqual(ret, true);
+            assert.strictEqual(ptt.state.login, true);
+          } catch (e) {
+            reject(e);
+          }
+          resolve();
         });
       });
     });
@@ -60,9 +66,13 @@ describe('Connection', () => {
           if (!await ptt.login(username, password)) {
             reject();
           }
-          const ret = await ptt.logout();
-          assert.strictEqual(ret, true);
-          assert.strictEqual(ptt.state.login, false);
+          try {
+            const ret = await ptt.logout();
+            assert.strictEqual(ret, true);
+            assert.strictEqual(ptt.state.login, false);
+          } catch (e) {
+            reject(e);
+          }
           resolve();
         });
       });
