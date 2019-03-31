@@ -20,11 +20,10 @@ const setIntevalUntil = (async (_func, _validate, _inteval) => {
 
 class Bot extends EventEmitter {
   static initialState = {
+    connect: false,
     login: false,
   };
   static forwardEvents = [
-    'connect',
-    'disconnect',
     'message',
     'error',
   ];
@@ -60,11 +59,19 @@ class Bot extends EventEmitter {
       socket.on(e, this.emit.bind(this, e));
     });
     socket
+      .on('connect', (...args) => {
+        this._state.connect = true;
+        this.emit('connect', ...args);
+        this.emit('stateChange', this.state);
+      })
+      .on('disconnect', (closeEvent, ...args) => {
+        this._state.connect = false;
+        this.emit('disconnect', closeEvent, ...args);
+        this.emit('stateChange', this.state);
+      })
       .on('message', (msg) => {
         this._term.write(msg);
         this.emit('redraw', this._term.toString());
-      })
-      .on('disconnect', (close) => {
       })
       .on('error', (err) => {
         console.log(err);
@@ -84,22 +91,26 @@ class Bot extends EventEmitter {
   async send(msg) {
     this.config.preventIdle && this.preventIdle();
     return new Promise(resolve => {
-      this.socket.send(msg);
-      this.once('message', msg => {
-        resolve(msg);
-      });
+      if (this.state.connect) {
+        this.socket.send(msg);
+        this.once('message', msg => {
+          resolve(msg);
+        });
+      }
     });
   }
 
   preventIdle(timeout = 60) {
     clearTimeout(this.preventIdleHandler);
-    this.preventIdleHandler = setTimeout(() => {
-      this.send(`${key.CtrlU}${key.ArrowLeft}`);
-    }, timeout * 1000);
+    if (this.state.login) {
+      this.preventIdleHandler = setTimeout(() => {
+        this.send(`${key.CtrlU}${key.ArrowLeft}`);
+      }, timeout * 1000);
+    }
   }
 
   async login(username, password) {
-    if (this._state.login) return;
+    if (this.state.login) return;
     username = username.replace(/,/g, '');
     await this.send(`${username},${key.Enter}${password}${key.Enter}`);
     let ret;
@@ -118,7 +129,7 @@ class Bot extends EventEmitter {
   }
 
   async logout() {
-    if (!this._state.login) return;
+    if (!this.state.login) return;
     await this.send(`${key.ArrowLeft.repeat(10)}${key.ArrowRight}y${key.Enter}`);
     this._state.login = false;
     this.emit('stateChange', this.state);
