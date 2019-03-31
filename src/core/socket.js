@@ -11,7 +11,7 @@ class Socket extends EventEmitter {
   connect() {
     let socket;
     if (typeof WebSocket === 'undefined') {
-      throw new Error(`'WebSocket' is undefined. Have you ever include any websocket polyfill?`);
+      throw new Error(`'WebSocket' is undefined. Do you include any websocket polyfill?`);
     } else if (WebSocket.length === 1) {
       socket = new WebSocket(this._config.url);
     } else {
@@ -40,6 +40,11 @@ class Socket extends EventEmitter {
     });
 
     this._socket = socket;
+  }
+
+  disconnect() {
+    const socket = this._socket;
+    socket.close();
   }
 
   send(str) {
