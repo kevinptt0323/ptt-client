@@ -49,7 +49,9 @@ class Socket extends EventEmitter {
 
   send(str) {
     const socket = this._socket;
-    socket.send(encode(str));
+    if (socket.readyState == 1 /* OPEN */) {
+      socket.send(encode(str));
+    }
   }
 }
 
