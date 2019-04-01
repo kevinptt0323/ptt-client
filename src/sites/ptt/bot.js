@@ -310,8 +310,14 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
-  async getMails() {
+  async getMails(offset=0) {
     await this.enterMail();
+    offset |= 0;
+    if (offset > 0) {
+      offset = Math.max(offset-9, 1);
+      await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
+    }
+
     const { getLine } = this;
 
     let mails = [];
@@ -386,7 +392,7 @@ class Bot extends EventEmitter {
   }
 
   async enterMail() {
-    await this.send(`M${key.Enter}R${key.Enter}`);
+    await this.send(`M${key.Enter}R${key.Enter}${key.Home}${key.End}`);
     return true;
   }
 }
