@@ -88,6 +88,36 @@ class Bot extends EventEmitter {
     return this._term.state.getLine(n);
   };
 
+  async getLines() {
+    const { getLine } = this;
+    const lines = [];
+
+    lines.push(getLine(0).str);
+
+    while (!getLine(23).str.includes("100%")) {
+      for(let i=1; i<23; i++) {
+        lines.push(getLine(i).str);
+      }
+      await this.send(key.PgDown);
+    }
+
+    const lastLine = lines[lines.length-1];
+    for(let i=0; i<23; i++) {
+      if (getLine(i).str == lastLine) {
+        for(let j=i+1; j<23; j++) {
+          lines.push(getLine(j).str);
+        }
+        break;
+      }
+    }
+
+    while (lines.length > 0 && lines[lines.length-1].length == 0) {
+      lines.pop();
+    }
+
+    return lines;
+  }
+
   async send(msg) {
     this.config.preventIdle && this.preventIdle();
     return new Promise(resolve => {
@@ -160,6 +190,11 @@ class Bot extends EventEmitter {
     return null;
   }
 
+  _checkArticleWithHeader() {
+    const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
+    return authorArea === "作者";
+  }
+
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
     offset |= 0;
@@ -204,32 +239,23 @@ class Bot extends EventEmitter {
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
+    const hasHeader = this._checkArticleWithHeader();
+
     let article = {
       sn,
-      author:    substrWidth('dbcs', getLine(0).str, 7, 50).trim(),
-      title:     substrWidth('dbcs', getLine(1).str, 7    ).trim(),
-      timestamp: substrWidth('dbcs', getLine(2).str, 7    ).trim(),
+      author: "",
+      title: "",
+      timestamp: "",
       lines: [],
     };
 
-    article.lines.push(getLine(0).str);
-
-    while (!getLine(23).str.includes("100%")) {
-      for(let i=1; i<23; i++) {
-        article.lines.push(getLine(i).str);
-      }
-      await this.send(key.PgDown);
+    if (this._checkArticleWithHeader()) {
+      article.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
+      article.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
+      article.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
     }
 
-    const lastLine = article.lines[article.lines.length-1];
-    for(let i=0; i<23; i++) {
-      if (getLine(i).str == lastLine) {
-        for(let j=i+1; j<23; j++) {
-          article.lines.push(getLine(j).str);
-        }
-        break;
-      }
-    }
+    article.lines = await this.getLines();
 
     await this.enterIndex();
     return article;
