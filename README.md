@@ -23,17 +23,36 @@ global.WebSocket = require('ws');
 (async function() {
   const ptt = new PTT();
 
-  if (!await ptt.login('guest', 'guest'))
-    return;
+  ptt.once('connect', () => {
 
-  // get last 20 articles from specific board
-  let articles = await ptt.getArticles('C_Chat');
+    const kickOther = true;
+    if (!await ptt.login('guest', 'guest', kickOther))
+      return;
+  
+    // get last 20 articles from specific board. the first one is the latest
+    let articles = await ptt.getArticles('C_Chat');
 
-  // get the content of specific article
-  let article = await ptt.getArticle('C_Chat', articles[articles.length-1].sn);
+    // get articles with offset 
+    let offset = articles[article.length-1].sn - 1;
+    let articles2 = await ptt.getArticles('C_Chat', offset);
+  
+    // get the content of specific article
+    let article = await ptt.getArticle('C_Chat', articles[articles.length-1].sn);
+  
+    // get your favorite list
+    let favorites = await ptt.getFavorite();
+  
+    // get favorite list in a folder
+    if (favorites[0].folder)
+      await ptt.getFavorite(favorites[0].bn);
 
-  // get your favorite list
-  let favorites = await ptt.getFavorite();
+    let mails = await ptt.getMails();
+
+    let mail = await ptt.getMail(mails[0].sn);
+
+    await ptt.logout();
+
+  });
 })();
 ```
 
