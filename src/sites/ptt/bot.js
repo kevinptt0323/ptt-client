@@ -11,13 +11,6 @@ import {
 
 import defaultConfig from './config';
 
-const setIntevalUntil = (async (_func, _validate, _inteval) => {
-  await sleep(_inteval);
-  let ret = await _func();
-  if (_validate(ret)) return ret;
-  else return setIntevalUntil(_func, _validate, _inteval);
-});
-
 class Bot extends EventEmitter {
   static initialState = {
     connect: false,
