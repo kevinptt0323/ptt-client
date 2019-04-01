@@ -261,8 +261,14 @@ class Bot extends EventEmitter {
     return article;
   }
 
-  async getFavorite() {
-    await this.enterFavorite();
+  async getFavorite(offsets=[]) {
+    if (typeof offsets === "string") {
+      offsets |= 0;
+    }
+    if (typeof offsets === "number") {
+      offsets = [offsets];
+    }
+    await this.enterFavorite(offsets);
     const { getLine } = this;
 
     const favorites = [];
@@ -386,8 +392,10 @@ class Bot extends EventEmitter {
     return false;
   }
 
-  async enterFavorite() {
-    await this.send(`F${key.Enter}`);
+  async enterFavorite(offsets=[]) {
+    const enterOffsetMessage =
+      offsets.map(offset => `${offset}${key.Enter.repeat(2)}`).join();
+    await this.send(`F${key.Enter}${enterOffsetMessage}`);
     return true;
   }
 
