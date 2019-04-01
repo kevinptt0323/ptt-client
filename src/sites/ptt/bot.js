@@ -331,6 +331,34 @@ class Bot extends EventEmitter {
     return mails.reverse();
   }
 
+  async getMail(sn) {
+    await this.enterMail();
+    const { getLine } = this;
+
+    await this.send(`${sn}${key.Enter}${key.Enter}`);
+
+    const hasHeader = this._checkArticleWithHeader();
+
+    let mail = {
+      sn,
+      author: "",
+      title: "",
+      timestamp: "",
+      lines: [],
+    };
+
+    if (this._checkArticleWithHeader()) {
+      mail.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
+      mail.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
+      mail.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
+    }
+
+    mail.lines = await this.getLines();
+
+    await this.enterIndex();
+    return mail;
+  }
+
   async enterIndex() {
     await this.send(`${key.ArrowLeft.repeat(10)}`);
     return true;
