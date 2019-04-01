@@ -67,7 +67,6 @@ class Bot extends EventEmitter {
         this.emit('redraw', this._term.toString());
       })
       .on('error', (err) => {
-        console.log(err);
       });
     this.socket = socket;
     this.config = config;
@@ -132,12 +131,12 @@ class Bot extends EventEmitter {
     }
   }
 
-  async login(username, password) {
+  async login(username, password, kick=true) {
     if (this.state.login) return;
     username = username.replace(/,/g, '');
     await this.send(`${username},${key.Enter}${password}${key.Enter}`);
     let ret;
-    while ((ret = await this._checkLogin()) === null) {
+    while ((ret = await this._checkLogin(kick)) === null) {
       await sleep(400);
     }
     if (ret) {
@@ -159,21 +158,22 @@ class Bot extends EventEmitter {
     return true;
   }
 
-  async _checkLogin() {
+  async _checkLogin(kick) {
     const { getLine } = this;
 
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
       this.emit('login.failed');
       return false;
-    } else if ((getLine(22).str+getLine(23).str).toLowerCase().includes("y/n")) {
-    //} else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
-      await this.send(`y${key.Enter}`);
+    } else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
+      await this.send(`${key.Backspace}${kick?'y':'n'}${key.Enter}`);
     } else if (getLine(23).str.includes("請勿頻繁登入以免造成系統過度負荷")) {
       await this.send(`${key.Enter}`);
     } else if (getLine(23).str.includes("按任意鍵繼續")) {
       await this.send(`${key.Enter}`);
     } else if (getLine(23).str.includes("您要刪除以上錯誤嘗試的記錄嗎")) {
-      await this.send(`y${key.Enter}`);
+      await this.send(`${key.Backspace}y${key.Enter}`);
+    } else if ((getLine(22).str+getLine(23).str).toLowerCase().includes("y/n")) {
+      await this.send(`${key.Backspace}y${key.Enter}`);
     } else if (getLine(23).str.includes("我是")) {
       this.emit('login.success');
       return true;
