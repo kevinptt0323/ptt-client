@@ -40,7 +40,7 @@ describe('Articles', () => {
         assert((new RegExp(/^\d{1,2}\/\d{1,2}$/)).test(article.date));
       });
     });
-    it('should get correct article list with offset argument', async() => {
+    it('should get correct article list with offset argument', async () => {
       let articles2 = await ptt.getArticles('C_Chat', articles[articles.length-1].sn-1);
       assert.equal(articles2[0].sn, articles[articles.length-1].sn-1);
     });
