@@ -61,3 +61,6 @@ global.WebSocket = require('ws');
 npm run test
 npm run build
 ```
+
+## License
+MIT
