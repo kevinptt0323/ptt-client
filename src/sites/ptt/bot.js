@@ -20,10 +20,6 @@ class Bot extends EventEmitter {
     'message',
     'error',
   ];
-  searchCondition = {
-    searchType: "",
-    condition: ""
-  };
   
   constructor(config) {
     super();
@@ -75,6 +71,10 @@ class Bot extends EventEmitter {
       });
     this.socket = socket;
     this.config = config;
+    this.searchCondition = {
+      Type: "",
+      condition: ""
+    };
   }
 
   get state() {
@@ -193,8 +193,30 @@ class Bot extends EventEmitter {
     return authorArea === "作者";
   }
 
-  searchConditionIsSet() {
-    if (this.searchCondition.searchType) {
+  setSearchCondition(Type, condition) {
+    switch (Type) {
+      case 'push':
+        this.searchCondition.Type = 'Z';
+        break;
+      case 'author':
+        this.searchCondition.Type = 'a';
+        break;
+      case 'title':
+        this.searchCondition.Type = '/';
+        break;
+      default:
+        throw `Invalid condition: ${Type}`;
+    }
+    this.searchCondition.condition = condition;
+  }
+  
+  resetSearchCondition() {
+    this.searchCondition.Type = "";
+    this.searchCondition.condition = "";
+  }
+
+  isSearchConditionSet() {
+    if (this.searchCondition.Type) {
       return true;
     }
     return false;
@@ -202,8 +224,8 @@ class Bot extends EventEmitter {
 
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
-    if (this.searchConditionIsSet()){
-      await this.send(`${this.searchCondition.searchType}${this.searchCondition.condition}${key.Enter}`);
+    if (this.isSearchConditionSet()){
+      await this.send(`${this.searchCondition.Type}${this.searchCondition.condition}${key.Enter}`);
     }
 
     offset |= 0;
@@ -412,28 +434,6 @@ class Bot extends EventEmitter {
     await this.send(`M${key.Enter}R${key.Enter}${key.Home}${key.End}`);
     return true;
   }
-}
-
-Bot.prototype.setSearchCondition = function (searchType, condition) {
-  switch (searchType) {
-    case 'push':
-      this.searchCondition.searchType = 'Z';
-      break;
-    case 'author':
-      this.searchCondition.searchType = 'a';
-      break;
-    case 'title':
-      this.searchCondition.searchType = '/';
-      break;
-    default:
-      throw `Invalid condition: ${searchType}`;
-  }
-  this.searchCondition.condition = condition;
-}
-
-Bot.prototype.resetSearchCondition = function() {
-  this.searchCondition.searchType = "";
-  this.searchCondition.condition = "";
 }
 
 export default Bot;
