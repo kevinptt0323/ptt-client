@@ -20,6 +20,14 @@ class Bot extends EventEmitter {
     'message',
     'error',
   ];
+  searchCondition = {
+    type: null,
+    condition: null,
+    init(){
+      this.type = "";
+      this.condition = "";
+    }
+  };
   
   constructor(config) {
     super();
@@ -71,10 +79,7 @@ class Bot extends EventEmitter {
       });
     this.socket = socket;
     this.config = config;
-    this.searchCondition = {
-      Type: "",
-      condition: ""
-    };
+    this.searchCondition.init();
   }
 
   get state() {
@@ -193,39 +198,35 @@ class Bot extends EventEmitter {
     return authorArea === "作者";
   }
 
-  setSearchCondition(Type, condition) {
-    switch (Type) {
+  setSearchCondition(type, condition) {
+    switch (type) {
       case 'push':
-        this.searchCondition.Type = 'Z';
+        this.searchCondition.type = 'Z';
         break;
       case 'author':
-        this.searchCondition.Type = 'a';
+        this.searchCondition.type = 'a';
         break;
       case 'title':
-        this.searchCondition.Type = '/';
+        this.searchCondition.type = '/';
         break;
       default:
-        throw `Invalid condition: ${Type}`;
+        throw `Invalid condition: ${type}`;
     }
     this.searchCondition.condition = condition;
   }
   
   resetSearchCondition() {
-    this.searchCondition.Type = "";
-    this.searchCondition.condition = "";
+    this.searchCondition.init();
   }
 
   isSearchConditionSet() {
-    if (this.searchCondition.Type) {
-      return true;
-    }
-    return false;
+    return (this.searchCondition.type !== "");
   }
 
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
-      await this.send(`${this.searchCondition.Type}${this.searchCondition.condition}${key.Enter}`);
+      await this.send(`${this.searchCondition.type}${this.searchCondition.condition}${key.Enter}`);
     }
 
     offset |= 0;
