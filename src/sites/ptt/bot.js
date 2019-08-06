@@ -20,6 +20,15 @@ class Bot extends EventEmitter {
     'message',
     'error',
   ];
+  searchCondition = {
+    type: null,
+    condition: null,
+    init(){
+      this.type = "";
+      this.condition = "";
+    }
+  };
+  
   constructor(config) {
     super();
     config = {...defaultConfig, ...config};
@@ -70,6 +79,7 @@ class Bot extends EventEmitter {
       });
     this.socket = socket;
     this.config = config;
+    this.searchCondition.init();
   }
 
   get state() {
@@ -188,8 +198,37 @@ class Bot extends EventEmitter {
     return authorArea === "作者";
   }
 
+  setSearchCondition(type, condition) {
+    switch (type) {
+      case 'push':
+        this.searchCondition.type = 'Z';
+        break;
+      case 'author':
+        this.searchCondition.type = 'a';
+        break;
+      case 'title':
+        this.searchCondition.type = '/';
+        break;
+      default:
+        throw `Invalid condition: ${type}`;
+    }
+    this.searchCondition.condition = condition;
+  }
+  
+  resetSearchCondition() {
+    this.searchCondition.init();
+  }
+
+  isSearchConditionSet() {
+    return (this.searchCondition.type !== "");
+  }
+
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
+    if (this.isSearchConditionSet()){
+      await this.send(`${this.searchCondition.type}${this.searchCondition.condition}${key.Enter}`);
+    }
+
     offset |= 0;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
