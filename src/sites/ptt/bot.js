@@ -45,7 +45,7 @@ class Bot extends EventEmitter {
       case 'websocket':
       case 'ws':
       case 'wss':
-        Socket = require("../../core/socket").default;
+        Socket = require("../../socket").default;
         break;
       case 'telnet':
       case 'ssh':
