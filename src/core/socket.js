@@ -1,6 +1,4 @@
 import EventEmitter from 'eventemitter3';
-import decode from './decode';
-import encode from './encode';
 
 class Socket extends EventEmitter {
   constructor(config) {
@@ -24,15 +22,15 @@ class Socket extends EventEmitter {
     socket.addEventListener('close', this.emit.bind(this, 'disconnect'));
     socket.addEventListener('error', this.emit.bind(this, 'error'));
 
-    let buffer = [];
+    let data = [];
     let timeoutHandler;
     socket.binaryType = "arraybuffer";
-    socket.addEventListener('message', ({ data }) => {
+    socket.addEventListener('message', ({ data: currData }) => {
       clearTimeout(timeoutHandler);
-      buffer.push(...new Uint8Array(data));
+      data.push(...new Uint8Array(currData));
       timeoutHandler = setTimeout(() => {
-        this.emit('message', decode(buffer, this._config));
-        buffer = [];
+        this.emit('message', data);
+        data = [];
       }, this._config.timeout);
       if (data.byteLength > this._config.blobSize) {
         throw new Error(`Receive message length(${data.byteLength}) greater than buffer size(${this._config.blobSize})`);
@@ -50,7 +48,7 @@ class Socket extends EventEmitter {
   send(str) {
     const socket = this._socket;
     if (socket.readyState == 1 /* OPEN */) {
-      socket.send(encode(str));
+      socket.send(str);
     }
   }
 }

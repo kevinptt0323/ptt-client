@@ -1,6 +1,8 @@
 import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
 import Terminal from 'terminal.js';
+import decode from '../../utils/decode';
+import encode from '../../utils/encode';
 
 import key from '../../utils/keyboard';
 import {
@@ -23,7 +25,7 @@ class Bot extends EventEmitter {
   searchCondition = {
     type: null,
     condition: null,
-    init(){
+    init: function() {
       this.type = "";
       this.condition = "";
     }
@@ -36,6 +38,7 @@ class Bot extends EventEmitter {
     this._term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
     this._term.state.setMode('stringWidth', 'dbcs');
+    this.currentCharset = 'big5';
 
     let Socket;
     switch (config.protocol.toLowerCase()) {
@@ -71,7 +74,12 @@ class Bot extends EventEmitter {
         this.emit('disconnect', closeEvent, ...args);
         this.emit('stateChange', this.state);
       })
-      .on('message', (msg) => {
+      .on('message', (data) => {
+        if (this.currentCharset != this.config.charset && !this.state.login &&
+            decode(data, 'utf8').includes('登入中，請稍候...')) {
+          this.currentCharset = this.config.charset;
+        }
+        const msg = decode(data, this.currentCharset);
         this._term.write(msg);
         this.emit('redraw', this._term.toString());
       })
@@ -79,7 +87,6 @@ class Bot extends EventEmitter {
       });
     this.socket = socket;
     this.config = config;
-    this.searchCondition.init();
   }
 
   get state() {
@@ -124,7 +131,7 @@ class Bot extends EventEmitter {
     this.config.preventIdle && this.preventIdle();
     return new Promise(resolve => {
       if (this.state.connect) {
-        this.socket.send(msg);
+        this.socket.send(encode(msg, this.currentCharset));
         this.once('message', msg => {
           resolve(msg);
         });
@@ -144,7 +151,10 @@ class Bot extends EventEmitter {
   async login(username, password, kick=true) {
     if (this.state.login) return;
     username = username.replace(/,/g, '');
-    await this.send(`${username},${key.Enter}${password}${key.Enter}`);
+    if (this.config.charset === 'utf8') {
+      username += ',';
+    }
+    await this.send(`${username}${key.Enter}${password}${key.Enter}`);
     let ret;
     while ((ret = await this._checkLogin(kick)) === null) {
       await sleep(400);
@@ -155,6 +165,7 @@ class Bot extends EventEmitter {
       state.position = {
         boardname: "",
       };
+      this.searchCondition.init();
       this.emit('stateChange', this.state);
     }
     return ret;
