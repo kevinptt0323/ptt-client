@@ -142,8 +142,9 @@ class Bot extends EventEmitter {
   preventIdle(timeout = 60) {
     clearTimeout(this.preventIdleHandler);
     if (this.state.login) {
-      this.preventIdleHandler = setTimeout(() => {
-        this.send(`${key.CtrlU}${key.ArrowLeft}`);
+      this.preventIdleHandler = setTimeout(async () => {
+        await this.send(key.CtrlU);
+        await this.send(key.ArrowLeft);
       }, timeout * 1000);
     }
   }

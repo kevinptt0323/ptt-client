@@ -4,7 +4,7 @@ const config = {
   charset: 'utf8',
   origin: 'https://www.ptt.cc',
   protocol: 'websocket',
-  timeout: 200,
+  timeout: 60,
   blobSize: 1024,
   preventIdle: true,
   terminal: {
