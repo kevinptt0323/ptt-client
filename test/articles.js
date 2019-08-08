@@ -1,6 +1,5 @@
 import assert from 'assert';
 import pttbot from '../src';
-import key from '../src/utils/keyboard';
 import { username, password } from './config';
 
 const newbot = async () => {
@@ -26,8 +25,9 @@ describe('Articles', () => {
 
   describe('getArticles', () => {
     let articles;
+    const boardname = 'C_Chat';
     it('should get correct article list from board', async () => {
-      articles = await ptt.getArticles('C_Chat');
+      articles = await ptt.getArticles(boardname);
       assert(articles.length > 0);
 
       articles.forEach(article => {
@@ -41,7 +41,7 @@ describe('Articles', () => {
       });
     });
     it('should get correct article list with offset argument', async () => {
-      let articles2 = await ptt.getArticles('C_Chat', articles[articles.length-1].sn-1);
+      let articles2 = await ptt.getArticles(boardname, articles[articles.length-1].sn-1);
 
       let article1Info = `${articles[articles.length-1].sn} ${articles[articles.length-1].author} ${articles[articles.length-1].title}`;
       let article2Info = `${articles2[0].sn} ${articles2[0].author} ${articles2[0].title}`;
