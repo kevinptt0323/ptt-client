@@ -33,8 +33,12 @@ class Bot extends EventEmitter {
   
   constructor(config) {
     super();
-    config = {...defaultConfig, ...config};
+    this.config = {...defaultConfig, ...config};
+    this.init();
+  }
 
+  init() {
+    const { config } = this;
     this._term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
     this._term.state.setMode('stringWidth', 'dbcs');
@@ -86,7 +90,6 @@ class Bot extends EventEmitter {
       .on('error', (err) => {
       });
     this.socket = socket;
-    this.config = config;
   }
 
   get state() {
@@ -184,6 +187,9 @@ class Bot extends EventEmitter {
     const { getLine } = this;
 
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
+      this.emit('login.failed');
+      return false;
+    } else if (getLine(23).str.includes("請稍後再試")) {
       this.emit('login.failed');
       return false;
     } else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
