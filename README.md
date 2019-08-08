@@ -35,6 +35,10 @@ global.WebSocket = require('ws');
     // get articles with offset 
     let offset = articles[article.length-1].sn - 1;
     let articles2 = await ptt.getArticles('C_Chat', offset);
+
+    // get articles with search filter (type: 'push', 'author', 'title')
+    ptt.setSearchCondition('title', '閒聊');
+    articles2 = await ptt.getArticles('C_Chat');
   
     // get the content of specific article
     let article = await ptt.getArticle('C_Chat', articles[articles.length-1].sn);
