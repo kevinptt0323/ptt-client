@@ -1,6 +1,5 @@
 import assert from 'assert';
 import pttbot from '../src';
-import key from '../src/utils/keyboard';
 import { username, password } from './config';
 
 const newbot = async () => {

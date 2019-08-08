@@ -4,7 +4,7 @@ import Terminal from 'terminal.js';
 import decode from '../../utils/decode';
 import encode from '../../utils/encode';
 
-import key from '../../utils/keyboard';
+import key from '../../utils/keymap';
 import {
   getWidth,
   indexOfWidth,
