@@ -128,7 +128,7 @@ class Bot extends EventEmitter {
   }
 
   async send(msg) {
-    this.config.preventIdle && this.preventIdle();
+    this.config.preventIdleTimeout && this.preventIdle(this.config.preventIdleTimeout);
     return new Promise(resolve => {
       if (this.state.connect) {
         this.socket.send(encode(msg, this.currentCharset));
@@ -139,7 +139,7 @@ class Bot extends EventEmitter {
     });
   }
 
-  preventIdle(timeout = 60) {
+  preventIdle(timeout) {
     clearTimeout(this.preventIdleHandler);
     if (this.state.login) {
       this.preventIdleHandler = setTimeout(async () => {

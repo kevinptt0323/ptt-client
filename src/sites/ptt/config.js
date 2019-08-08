@@ -4,9 +4,9 @@ const config = {
   charset: 'utf8',
   origin: 'https://www.ptt.cc',
   protocol: 'websocket',
-  timeout: 60,
+  timeout: 200,
   blobSize: 1024,
-  preventIdle: true,
+  preventIdleTimeout: 30,
   terminal: {
     columns: 80,
     rows: 24,
