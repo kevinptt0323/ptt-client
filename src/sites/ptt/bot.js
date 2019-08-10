@@ -22,12 +22,16 @@ class Bot extends EventEmitter {
     'message',
     'error',
   ];
+
+  conditionUnit(type, condition) {
+    this.type = type;
+    this.condition = condition;
+  };
+  
   searchCondition = {
-    type: null,
-    condition: null,
+    conditions: null,
     init: function() {
-      this.type = "";
-      this.condition = "";
+      this.conditions = [];
     }
   };
   
@@ -217,20 +221,21 @@ class Bot extends EventEmitter {
   }
 
   setSearchCondition(type, condition) {
+    let _type;
     switch (type) {
       case 'push':
-        this.searchCondition.type = 'Z';
+        _type = 'Z';
         break;
       case 'author':
-        this.searchCondition.type = 'a';
+        _type = 'a';
         break;
       case 'title':
-        this.searchCondition.type = '/';
+        _type = '/';
         break;
       default:
         throw `Invalid condition: ${type}`;
     }
-    this.searchCondition.condition = condition;
+    this.searchCondition.conditions.push(new this.conditionUnit(_type, condition));
   }
   
   resetSearchCondition() {
@@ -238,13 +243,17 @@ class Bot extends EventEmitter {
   }
 
   isSearchConditionSet() {
-    return (this.searchCondition.type !== "");
+    return (this.searchCondition.conditions.length !== 0);
   }
 
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
-      await this.send(`${this.searchCondition.type}${this.searchCondition.condition}${key.Enter}`);
+      let searchString = '';
+      this.searchCondition.conditions.forEach(condition => {
+        searchString = searchString.concat(`${condition.type}${condition.condition}${key.Enter}`);
+      });
+      await this.send(`${searchString}`);
     }
 
     offset |= 0;
