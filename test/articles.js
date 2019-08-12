@@ -119,4 +119,27 @@ describe('Articles', () => {
       });
     });
   })
+
+  describe('getSearchArticles by title and push', () => {
+    after('resetSearchCondition', () => {
+      ptt.resetSearchCondition();
+    });
+    let board = 'C_Chat';
+    let title = '閒聊';
+    let push = '50';
+    
+    it('should get correct articles contain specified title word AND push number from board', async () => {
+      ptt.setSearchCondition('title', title);
+      ptt.setSearchCondition('push', push);
+      let articles = await ptt.getArticles(board);
+      assert(articles.length > 0);
+      
+      articles.forEach(article => {
+        let articleInfo = `${article.sn} ${article.push} ${article.title}`;
+        let pushNumber = (article.push === '爆') ? '100' : article.push;
+        assert(article.title.toLowerCase().includes(title), articleInfo);
+        assert(Number(pushNumber) >= Number(push), articleInfo);
+      });
+    });
+  })
 });
