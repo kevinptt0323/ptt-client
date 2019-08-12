@@ -13,6 +13,32 @@ import {
 
 import defaultConfig from './config';
 
+class Condition{
+  typeWord;
+  criteria;
+
+  constructor(type, criteria){
+    switch (type) {
+      case 'push':
+        this.typeWord = 'Z';
+        break;
+      case 'author':
+        this.typeWord = 'a';
+        break;
+      case 'title':
+        this.typeWord = '/';
+        break;
+      default:
+        throw `Invalid condition: ${type}`;
+    }
+    this.criteria = criteria;
+  }
+  
+  toSearchString() {
+    return `${this.typeWord}${this.criteria}`;
+  }
+}
+
 class Bot extends EventEmitter {
   static initialState = {
     connect: false,
@@ -23,15 +49,13 @@ class Bot extends EventEmitter {
     'error',
   ];
 
-  conditionUnit(type, condition) {
-    this.type = type;
-    this.condition = condition;
-  };
-  
   searchCondition = {
     conditions: null,
     init: function() {
       this.conditions = [];
+    },
+    add: function(type, criteria) {
+      this.conditions.push(new Condition(type, criteria));
     }
   };
   
@@ -220,22 +244,8 @@ class Bot extends EventEmitter {
     return authorArea === "作者";
   }
 
-  setSearchCondition(type, condition) {
-    let _type;
-    switch (type) {
-      case 'push':
-        _type = 'Z';
-        break;
-      case 'author':
-        _type = 'a';
-        break;
-      case 'title':
-        _type = '/';
-        break;
-      default:
-        throw `Invalid condition: ${type}`;
-    }
-    this.searchCondition.conditions.push(new this.conditionUnit(_type, condition));
+  setSearchCondition(type, criteria) {
+    this.searchCondition.add(type, criteria);
   }
   
   resetSearchCondition() {
@@ -249,11 +259,8 @@ class Bot extends EventEmitter {
   async getArticles(boardname, offset=0) {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
-      let searchString = '';
-      this.searchCondition.conditions.forEach(condition => {
-        searchString = searchString.concat(`${condition.type}${condition.condition}${key.Enter}`);
-      });
-      await this.send(`${searchString}`);
+      let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
+      await this.send(`${searchString}${key.Enter}`);
     }
 
     offset |= 0;
