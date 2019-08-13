@@ -29,7 +29,7 @@ export function getWidth(widthType, str) {
 * @params {string} str - string to calculate
 * @params {number} width - the width of target string
 */
-export function indexOfWidth(widthType, str, width): number {
+export function indexOfWidth(widthType, str, width) {
 	if (widthType === 'length')
 		return getWidth(widthType, str);
 	for (var i = 0; i <= str.length; i++) {
