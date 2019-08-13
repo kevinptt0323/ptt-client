@@ -7,11 +7,13 @@ export function dbcswidth(str) {
 }
 /**
 * calculate width of string.
+* @params {string} widthType - calculate width by wcwidth or String.length
 * @params {string} str - string to calculate
-* @params {boolean} widthType - calculate width by wcwidth or String.length
 */
 export function getWidth(widthType, str) {
 	switch (widthType) {
+		case 'length':
+			return str.length;
 		case 'wcwidth':
 			return wcwidth(str);
 		case 'dbcs':
@@ -23,13 +25,13 @@ export function getWidth(widthType, str) {
 
 /**
 * calculate the position that the prefix of string is a specific width
+* @params {string} widthType - calculate width by wcwidth or String.length
 * @params {string} str - string to calculate
 * @params {number} width - the width of target string
-* @params {boolean} widthType - calculate width by wcwidth or String.length
 */
-export function indexOfWidth(widthType, str, width) {
-	if (widthType === false)
-		return width;
+export function indexOfWidth(widthType, str, width): number {
+	if (widthType === 'length')
+		return getWidth(widthType, str);
 	for (var i = 0; i <= str.length; i++) {
 		if (getWidth(widthType, str.substr(0, i)) > width)
 			return i - 1;
@@ -41,24 +43,28 @@ export function indexOfWidth(widthType, str, width) {
 * extract parts of string, beginning at the character at the specified position,
 * and returns the specified width of characters. if the character is incomplete,
 * it will be replaced by space.
+* @params {string} widthType - calculate width by wcwidth or String.length
 * @params {string} str - string to calculate
-* @params {number} start - the beginning position of string
+* @params {number} startWidth - the beginning position of string
 * @params {number} width - the width of target string
-* @params {boolean} widthType - calculate width by wcwidth or String.length
 */
 export function substrWidth(widthType, str, startWidth, width) {
+	var ignoreWidth = typeof width === 'undefined';
 	var length = width;
 	var start = startWidth;
-	var prefixSpace = 0, suffixSpace;
-	if (widthType !== false) {
+	var prefixSpace = 0, suffixSpace = 0;
+	if (widthType !== 'length') {
 		start = indexOfWidth(widthType, str, startWidth);
 		if (getWidth(widthType, str.substr(0, start)) < startWidth) {
-			start++;
+			start += 1;
 			prefixSpace = Math.max(getWidth(widthType, str.substr(0, start)) - startWidth, 0);
 		}
-		length = indexOfWidth(widthType, str.substr(start), width - prefixSpace);
-		suffixSpace = Math.min(width, getWidth(widthType, str.substr(start))) -
-			(prefixSpace + getWidth(widthType, str.substr(start, length)));
+		if (!ignoreWidth) {
+			length = indexOfWidth(widthType, str.substr(start), width - prefixSpace);
+			suffixSpace = Math.min(width, getWidth(widthType, str.substr(start))) -
+				(prefixSpace + getWidth(widthType, str.substr(start, length)));
+		}
 	}
-	return " ".repeat(prefixSpace) + str.substr(start, length) + " ".repeat(suffixSpace);
+	var substr = ignoreWidth ? str.substr(start) : str.substr(start, length);
+	return " ".repeat(prefixSpace) + substr + " ".repeat(suffixSpace);
 }
