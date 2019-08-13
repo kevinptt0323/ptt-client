@@ -1,6 +1,10 @@
 import EventEmitter from 'eventemitter3';
+import Config from './config';
 
 class Socket extends EventEmitter {
+  private _config: Config;
+  private _socket: WebSocket;
+
   constructor(config) {
     super();
     this._config = config;
@@ -13,7 +17,7 @@ class Socket extends EventEmitter {
     } else if (WebSocket.length === 1) {
       socket = new WebSocket(this._config.url);
     } else {
-      const options = {};
+      const options: any = {};
       if (this._config.origin)
         options.origin = this._config.origin;
       socket = new WebSocket(this._config.url, options);
@@ -32,8 +36,8 @@ class Socket extends EventEmitter {
         this.emit('message', data);
         data = [];
       }, this._config.timeout);
-      if (data.byteLength > this._config.blobSize) {
-        throw new Error(`Receive message length(${data.byteLength}) greater than buffer size(${this._config.blobSize})`);
+      if (currData.byteLength > this._config.blobSize) {
+        throw new Error(`Receive message length(${currData.byteLength}) greater than buffer size(${this._config.blobSize})`);
       }
     });
 

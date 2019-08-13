@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"moduleResolution": "node",
+		"module": "commonjs",
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"noEmit": true
+	},
+	"include": [
+		"test/*.ts"
+	]
+}

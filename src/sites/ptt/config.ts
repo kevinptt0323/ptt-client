@@ -1,4 +1,6 @@
-const config = {
+import Config from '../../config';
+
+const config: Config = {
   name: 'PTT',
   url: 'wss://ws.ptt.cc/bbs',
   charset: 'utf8',

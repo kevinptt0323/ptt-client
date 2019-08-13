@@ -1,15 +1,18 @@
 import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
 import Terminal from 'terminal.js';
+
+import Socket from '../../socket';
 import decode from '../../utils/decode';
 import encode from '../../utils/encode';
-
 import key from '../../utils/keymap';
 import {
   getWidth,
   indexOfWidth,
   substrWidth,
 } from '../../utils/char';
+
+import Config from '../../config';
 
 import defaultConfig from './config';
 
@@ -58,35 +61,37 @@ class Bot extends EventEmitter {
       this.conditions.push(new Condition(type, criteria));
     }
   };
+
+  private config: Config;
+  private _term: Terminal;
+  private _state: any;
+  private currentCharset: string;
+  private socket: Socket;
+  private preventIdleHandler: ReturnType<typeof setTimeout>;
   
-  constructor(config) {
+  constructor(config?: Config) {
     super();
     this.config = {...defaultConfig, ...config};
     this.init();
   }
 
-  init() {
+  async init() {
     const { config } = this;
     this._term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
     this._term.state.setMode('stringWidth', 'dbcs');
     this.currentCharset = 'big5';
 
-    let Socket;
     switch (config.protocol.toLowerCase()) {
       case 'websocket':
       case 'ws':
       case 'wss':
-        Socket = require("../../socket").default;
         break;
       case 'telnet':
       case 'ssh':
       default:
-        Socket = null;
-    }
-
-    if (Socket === null) {
-      throw `Invalid protocol: ${config.protocol}`;
+        throw `Invalid protocol: ${config.protocol}`;
+        break;
     }
 
     const socket = new Socket(config);
@@ -120,7 +125,7 @@ class Bot extends EventEmitter {
     this.socket = socket;
   }
 
-  get state() {
+  get state(): any {
     return {...this._state};
   }
 
@@ -263,7 +268,7 @@ class Bot extends EventEmitter {
       await this.send(`${searchString}${key.Enter}`);
     }
 
-    offset |= 0;
+    offset = +offset;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
@@ -273,7 +278,7 @@ class Bot extends EventEmitter {
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
       const article = {
-        sn:     substrWidth('dbcs', line, 1,   7).trim() | 0,
+        sn:    +substrWidth('dbcs', line, 1,   7).trim(),
         push:   substrWidth('dbcs', line, 9,   2).trim(),
         date:   substrWidth('dbcs', line, 11,  5).trim(),
         author: substrWidth('dbcs', line, 17, 12).trim(),
@@ -331,9 +336,9 @@ class Bot extends EventEmitter {
     return article;
   }
 
-  async getFavorite(offsets=[]) {
+  async getFavorite(offsets: string|number|string[]|number[]=[]) {
     if (typeof offsets === "string") {
-      offsets |= 0;
+      offsets = +offsets;
     }
     if (typeof offsets === "number") {
       offsets = [offsets];
@@ -352,7 +357,7 @@ class Bot extends EventEmitter {
           break;
         }
         let favorite = {
-          bn:        substrWidth('dbcs', line,  3,  4).trim() | 0,
+          bn:       +substrWidth('dbcs', line,  3,  4).trim(),
           read:      substrWidth('dbcs', line,  8,  2).trim() === '',
           boardname: substrWidth('dbcs', line, 10, 12).trim(),
           category:  substrWidth('dbcs', line, 23,  4).trim(),
@@ -402,7 +407,7 @@ class Bot extends EventEmitter {
 
   async getMails(offset=0) {
     await this.enterMail();
-    offset |= 0;
+    offset = +offset;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
@@ -414,7 +419,7 @@ class Bot extends EventEmitter {
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
       const mail = {
-        sn:     substrWidth('dbcs', line, 1,   5).trim() | 0,
+        sn:    +substrWidth('dbcs', line, 1,   5).trim(),
         date:   substrWidth('dbcs', line, 9,   5).trim(),
         author: substrWidth('dbcs', line, 15, 12).trim(),
         status: substrWidth('dbcs', line, 30,  2).trim(),
