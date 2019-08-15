@@ -3,9 +3,11 @@ import sleep from 'sleep-promise';
 import Terminal from 'terminal.js';
 
 import Socket from '../../socket';
-import decode from '../../utils/decode';
-import encode from '../../utils/encode';
-import key from '../../utils/keymap';
+import {
+  decode,
+  encode,
+  keymap as key,
+} from '../../utils';
 import {
   getWidth,
   indexOfWidth,
@@ -16,11 +18,11 @@ import Config from '../../config';
 
 import defaultConfig from './config';
 
-class Condition{
-  typeWord;
-  criteria;
+class Condition {
+  private typeWord: string;
+  private criteria: string;
 
-  constructor(type, criteria){
+  constructor(type: 'push'|'author'|'title', criteria: string) {
     switch (type) {
       case 'push':
         this.typeWord = 'Z';
@@ -37,7 +39,7 @@ class Condition{
     this.criteria = criteria;
   }
   
-  toSearchString() {
+  toSearchString(): string {
     return `${this.typeWord}${this.criteria}`;
   }
 }
@@ -75,7 +77,7 @@ class Bot extends EventEmitter {
     this.init();
   }
 
-  async init() {
+  async init(): Promise<void> {
     const { config } = this;
     this._term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
@@ -163,19 +165,21 @@ class Bot extends EventEmitter {
     return lines;
   }
 
-  async send(msg) {
+  async send(msg: string): Promise<void> {
     this.config.preventIdleTimeout && this.preventIdle(this.config.preventIdleTimeout);
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       if (this.state.connect) {
         this.socket.send(encode(msg, this.currentCharset));
         this.once('message', msg => {
           resolve(msg);
         });
+      } else {
+        reject();
       }
     });
   }
 
-  preventIdle(timeout) {
+  preventIdle(timeout: number): void {
     clearTimeout(this.preventIdleHandler);
     if (this.state.login) {
       this.preventIdleHandler = setTimeout(async () => {
@@ -185,7 +189,7 @@ class Bot extends EventEmitter {
     }
   }
 
-  async login(username, password, kick=true) {
+  async login(username: string, password: string, kick: boolean=true): Promise<any> {
     if (this.state.login) return;
     username = username.replace(/,/g, '');
     if (this.config.charset === 'utf8') {
@@ -208,7 +212,7 @@ class Bot extends EventEmitter {
     return ret;
   }
 
-  async logout() {
+  async logout(): Promise<boolean> {
     if (!this.state.login) return;
     await this.send(`G${key.Enter}Y${key.Enter.repeat(2)}`);
     this._state.login = false;
@@ -216,7 +220,7 @@ class Bot extends EventEmitter {
     return true;
   }
 
-  async _checkLogin(kick) {
+  async _checkLogin(kick: boolean): Promise<any> {
     const { getLine } = this;
 
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
@@ -244,31 +248,30 @@ class Bot extends EventEmitter {
     return null;
   }
 
-  _checkArticleWithHeader() {
+  _checkArticleWithHeader(): boolean {
     const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
     return authorArea === "作者";
   }
 
-  setSearchCondition(type, criteria) {
+  setSearchCondition(type: string, criteria: string): void {
     this.searchCondition.add(type, criteria);
   }
   
-  resetSearchCondition() {
+  resetSearchCondition(): void {
     this.searchCondition.init();
   }
 
-  isSearchConditionSet() {
+  isSearchConditionSet(): boolean {
     return (this.searchCondition.conditions.length !== 0);
   }
 
-  async getArticles(boardname, offset=0) {
+  async getArticles(boardname: string, offset: number=0) {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
       let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
       await this.send(`${searchString}${key.Enter}`);
     }
 
-    offset = +offset;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
@@ -304,7 +307,7 @@ class Bot extends EventEmitter {
     return articles.reverse();
   }
 
-  async getArticle(boardname, sn) {
+  async getArticle(boardname: string, sn: number) {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
       let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
@@ -336,10 +339,7 @@ class Bot extends EventEmitter {
     return article;
   }
 
-  async getFavorite(offsets: string|number|string[]|number[]=[]) {
-    if (typeof offsets === "string") {
-      offsets = +offsets;
-    }
+  async getFavorite(offsets: number|number[]=[]) {
     if (typeof offsets === "number") {
       offsets = [offsets];
     }
@@ -405,9 +405,8 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
-  async getMails(offset=0) {
+  async getMails(offset: number=0) {
     await this.enterMail();
-    offset = +offset;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
@@ -432,7 +431,7 @@ class Bot extends EventEmitter {
     return mails.reverse();
   }
 
-  async getMail(sn) {
+  async getMail(sn: number) {
     await this.enterMail();
     const { getLine } = this;
 
@@ -460,12 +459,12 @@ class Bot extends EventEmitter {
     return mail;
   }
 
-  async enterIndex() {
+  async enterIndex(): Promise<boolean> {
     await this.send(`${key.ArrowLeft.repeat(10)}`);
     return true;
   }
 
-  async enterBoard(boardname) {
+  async enterBoard(boardname: string): Promise<boolean> {
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
     const { getLine } = this;
@@ -481,14 +480,14 @@ class Bot extends EventEmitter {
     return false;
   }
 
-  async enterFavorite(offsets=[]) {
+  async enterFavorite(offsets: number[]=[]): Promise<boolean> {
     const enterOffsetMessage =
       offsets.map(offset => `${offset}${key.Enter.repeat(2)}`).join();
     await this.send(`F${key.Enter}${key.Home}${enterOffsetMessage}`);
     return true;
   }
 
-  async enterMail() {
+  async enterMail(): Promise<boolean> {
     await this.send(`M${key.Enter}R${key.Enter}${key.Home}${key.End}`);
     return true;
   }

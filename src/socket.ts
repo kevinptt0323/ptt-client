@@ -10,7 +10,7 @@ class Socket extends EventEmitter {
     this._config = config;
   }
 
-  connect() {
+  connect(): void {
     let socket;
     if (typeof WebSocket === 'undefined') {
       throw new Error(`'WebSocket' is undefined. Do you include any websocket polyfill?`);
@@ -44,12 +44,12 @@ class Socket extends EventEmitter {
     this._socket = socket;
   }
 
-  disconnect() {
+  disconnect(): void {
     const socket = this._socket;
     socket.close();
   }
 
-  send(str) {
+  send(str: string): void {
     const socket = this._socket;
     if (socket.readyState == 1 /* OPEN */) {
       socket.send(str);

@@ -3,6 +3,7 @@
   "version": "0.8.1",
   "description": "A Node client for fetching data from ptt.cc.",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.js",
   "scripts": {
     "type:check": "tsc",
     "type:declaration": "tsc --noEmit false --emitDeclarationOnly --declaration --declarationDir ./dist",

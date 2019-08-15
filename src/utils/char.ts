@@ -1,6 +1,6 @@
 import wcwidth from 'wcwidth';
 
-export function dbcswidth(str): number {
+export function dbcswidth(str: string): number {
 	return str.split("").reduce(function(sum, c) {
 		return sum + (c.charCodeAt(0) > 255 ? 2 : 1);
 	}, 0);
@@ -10,7 +10,7 @@ export function dbcswidth(str): number {
 * @params {string} widthType - calculate width by wcwidth or String.length
 * @params {string} str - string to calculate
 */
-export function getWidth(widthType, str): number {
+export function getWidth(widthType: string, str: string): number {
 	switch (widthType) {
 		case 'length':
 			return str.length;
@@ -29,7 +29,7 @@ export function getWidth(widthType, str): number {
 * @params {string} str - string to calculate
 * @params {number} width - the width of target string
 */
-export function indexOfWidth(widthType, str, width): number {
+export function indexOfWidth(widthType: string, str: string, width?: number): number {
 	if (widthType === 'length')
 		return getWidth(widthType, str);
 	for (var i = 0; i <= str.length; i++) {
@@ -48,7 +48,7 @@ export function indexOfWidth(widthType, str, width): number {
 * @params {number} startWidth - the beginning position of string
 * @params {number} width - the width of target string
 */
-export function substrWidth(widthType, str, startWidth, width?: number): string {
+export function substrWidth(widthType: string, str: string, startWidth: number, width?: number): string {
 	var ignoreWidth = typeof width === 'undefined';
 	var length = width;
 	var start = startWidth;
