@@ -13,10 +13,10 @@ import {
   indexOfWidth,
   substrWidth,
 } from '../../utils/char';
-
 import Config from '../../config';
 
 import defaultConfig from './config';
+import Article from './article';
 
 class Condition {
   private typeWord: string;
@@ -265,7 +265,7 @@ class Bot extends EventEmitter {
     return (this.searchCondition.conditions.length !== 0);
   }
 
-  async getArticles(boardname: string, offset: number=0) {
+  async getArticles(boardname: string, offset: number=0): Promise<Article[]> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
       let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
@@ -277,18 +277,18 @@ class Bot extends EventEmitter {
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
     }
     const { getLine } = this;
-    let articles = [];
+    let articles: Article[] = [];
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
-      const article = {
-        sn:    +substrWidth('dbcs', line, 1,   7).trim(),
-        push:   substrWidth('dbcs', line, 9,   2).trim(),
-        date:   substrWidth('dbcs', line, 11,  5).trim(),
-        author: substrWidth('dbcs', line, 17, 12).trim(),
-        status: substrWidth('dbcs', line, 30,  2).trim(),
-        title:  substrWidth('dbcs', line, 32    ).trim(),
-        fixed:  substrWidth('dbcs', line, 1,   7).trim().includes('★'),
-      };
+      const article = new Article();
+      article.boardname = boardname;
+      article.sn     =+substrWidth('dbcs', line, 1,   7).trim(),
+      article.push   = substrWidth('dbcs', line, 9,   2).trim(),
+      article.date   = substrWidth('dbcs', line, 11,  5).trim(),
+      article.author = substrWidth('dbcs', line, 17, 12).trim(),
+      article.status = substrWidth('dbcs', line, 30,  2).trim(),
+      article.title  = substrWidth('dbcs', line, 32    ).trim(),
+      article.fixed  = substrWidth('dbcs', line, 1,   7).trim().includes('★'),
       articles.push(article);
     }
     // fix sn
@@ -307,7 +307,7 @@ class Bot extends EventEmitter {
     return articles.reverse();
   }
 
-  async getArticle(boardname: string, sn: number) {
+  async getArticle(boardname: string, sn: number, article: Article = new Article()): Promise<Article> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
       let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
@@ -319,15 +319,10 @@ class Bot extends EventEmitter {
 
     const hasHeader = this._checkArticleWithHeader();
 
-    let article = {
-      sn,
-      author: "",
-      title: "",
-      timestamp: "",
-      lines: [],
-    };
+    article.sn = sn;
+    article.boardname = boardname;
 
-    if (this._checkArticleWithHeader()) {
+    if (hasHeader) {
       article.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
       article.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
       article.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
