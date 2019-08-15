@@ -16,7 +16,8 @@ import {
 import Config from '../../config';
 
 import defaultConfig from './config';
-import Article from './article';
+import {Article} from './article';
+import {Board} from './Board';
 
 class Condition {
   private typeWord: string;
@@ -334,7 +335,7 @@ class Bot extends EventEmitter {
     await this.enterFavorite(offsets);
     const { getLine } = this;
 
-    const favorites = [];
+    const favorites: Board[] = [];
 
     while (true) {
       let stopLoop = false;
@@ -344,42 +345,10 @@ class Bot extends EventEmitter {
           stopLoop = true;
           break;
         }
-        let favorite = {
-          bn:       +substrWidth('dbcs', line,  3,  4).trim(),
-          read:      substrWidth('dbcs', line,  8,  2).trim() === '',
-          boardname: substrWidth('dbcs', line, 10, 12).trim(),
-          category:  substrWidth('dbcs', line, 23,  4).trim(),
-          title:     substrWidth('dbcs', line, 30, 31),
-          users:     substrWidth('dbcs', line, 62,  5).trim(),
-          admin:     substrWidth('dbcs', line, 67    ).trim(),
-          folder:    false,
-          divider:   false,
-        };
+        let favorite = Board.fromLine(line);
         if (favorite.bn !== favorites.length + 1) {
           stopLoop = true;
           break;
-        }
-        switch (favorite.boardname) {
-          case 'MyFavFolder':
-            favorite = {
-              ...favorite,
-              title:  substrWidth('dbcs', line, 30),
-              users: '',
-              admin: '',
-              folder: true,
-            };
-            break;
-          case '------------':
-            favorite = {
-              ...favorite,
-              title:  substrWidth('dbcs', line, 30),
-              users: '',
-              admin: '',
-              divider: true,
-            };
-            break;
-          default:
-            break;
         }
         favorites.push(favorite);
       }
