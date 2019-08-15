@@ -170,10 +170,15 @@ class Bot extends EventEmitter {
     this.config.preventIdleTimeout && this.preventIdle(this.config.preventIdleTimeout);
     return new Promise((resolve, reject) => {
       if (this.state.connect) {
-        this.socket.send(encode(msg, this.currentCharset));
-        this.once('message', msg => {
-          resolve(msg);
-        });
+        if (msg.length > 0) {
+          this.socket.send(encode(msg, this.currentCharset));
+          this.once('message', msg => {
+            resolve(msg);
+          });
+        } else {
+          console.warn(`Sending message with 0-length`);
+          resolve();
+        }
       } else {
         reject();
       }
