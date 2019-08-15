@@ -16,7 +16,7 @@ import {
 import Config from '../../config';
 
 import defaultConfig from './config';
-import {Article} from './article';
+import {Article} from './Article';
 import {Board} from './Board';
 
 class Condition {
