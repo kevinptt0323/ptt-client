@@ -280,15 +280,8 @@ class Bot extends EventEmitter {
     let articles: Article[] = [];
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
-      const article = new Article();
+      const article = Article.fromLine(line);
       article.boardname = boardname;
-      article.sn     =+substrWidth('dbcs', line, 1,   7).trim(),
-      article.push   = substrWidth('dbcs', line, 9,   2).trim(),
-      article.date   = substrWidth('dbcs', line, 11,  5).trim(),
-      article.author = substrWidth('dbcs', line, 17, 12).trim(),
-      article.status = substrWidth('dbcs', line, 30,  2).trim(),
-      article.title  = substrWidth('dbcs', line, 32    ).trim(),
-      article.fixed  = substrWidth('dbcs', line, 1,   7).trim().includes('★'),
       articles.push(article);
     }
     // fix sn
