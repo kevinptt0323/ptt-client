@@ -166,7 +166,7 @@ class Bot extends EventEmitter {
     return lines;
   }
 
-  async send(msg: string): Promise<void> {
+  send(msg: string): Promise<void> {
     this.config.preventIdleTimeout && this.preventIdle(this.config.preventIdleTimeout);
     return new Promise((resolve, reject) => {
       if (this.state.connect) {
