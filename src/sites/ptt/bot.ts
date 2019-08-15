@@ -66,7 +66,7 @@ class Bot extends EventEmitter {
   };
 
   private config: Config;
-  private _term: Terminal;
+  private term: Terminal;
   private _state: any;
   private currentCharset: string;
   private socket: Socket;
@@ -80,9 +80,9 @@ class Bot extends EventEmitter {
 
   async init(): Promise<void> {
     const { config } = this;
-    this._term = new Terminal(config.terminal);
+    this.term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
-    this._term.state.setMode('stringWidth', 'dbcs');
+    this.term.state.setMode('stringWidth', 'dbcs');
     this.currentCharset = 'big5';
 
     switch (config.protocol.toLowerCase()) {
@@ -120,8 +120,8 @@ class Bot extends EventEmitter {
           this.currentCharset = this.config.charset;
         }
         const msg = decode(data, this.currentCharset);
-        this._term.write(msg);
-        this.emit('redraw', this._term.toString());
+        this.term.write(msg);
+        this.emit('redraw', this.term.toString());
       })
       .on('error', (err) => {
       });
@@ -133,7 +133,7 @@ class Bot extends EventEmitter {
   }
 
   getLine = (n) => {
-    return this._term.state.getLine(n);
+    return this.term.state.getLine(n);
   };
 
   async getLines() {
@@ -203,7 +203,7 @@ class Bot extends EventEmitter {
     }
     await this.send(`${username}${key.Enter}${password}${key.Enter}`);
     let ret;
-    while ((ret = await this._checkLogin(kick)) === null) {
+    while ((ret = await this.checkLogin(kick)) === null) {
       await sleep(400);
     }
     if (ret) {
@@ -226,7 +226,7 @@ class Bot extends EventEmitter {
     return true;
   }
 
-  async _checkLogin(kick: boolean): Promise<any> {
+  private async checkLogin(kick: boolean): Promise<any> {
     const { getLine } = this;
 
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
@@ -254,7 +254,7 @@ class Bot extends EventEmitter {
     return null;
   }
 
-  _checkArticleWithHeader(): boolean {
+  private checkArticleWithHeader(): boolean {
     const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
     return authorArea === "作者";
   }
@@ -316,7 +316,7 @@ class Bot extends EventEmitter {
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
-    const hasHeader = this._checkArticleWithHeader();
+    const hasHeader = this.checkArticleWithHeader();
 
     article.sn = sn;
     article.boardname = boardname;
@@ -399,7 +399,7 @@ class Bot extends EventEmitter {
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
-    const hasHeader = this._checkArticleWithHeader();
+    const hasHeader = this.checkArticleWithHeader();
 
     let mail = {
       sn,
@@ -409,7 +409,7 @@ class Bot extends EventEmitter {
       lines: [],
     };
 
-    if (this._checkArticleWithHeader()) {
+    if (this.checkArticleWithHeader()) {
       mail.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
       mail.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
       mail.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
