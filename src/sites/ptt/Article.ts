@@ -33,7 +33,9 @@ export class Article {
   set content(data: ReadonlyArray<string>) {
     this._content = data.slice();
   }
-  // DEPRECATED
+  /**
+   * @deprecated
+   */
   get lines(): ReadonlyArray<string> {
     return this.content;
   }
