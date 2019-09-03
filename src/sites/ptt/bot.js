@@ -301,6 +301,10 @@ class Bot extends EventEmitter {
 
   async getArticle(boardname, sn) {
     await this.enterBoard(boardname);
+    if (this.isSearchConditionSet()){
+      let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
+      await this.send(`${searchString}${key.Enter}`);
+    }
     const { getLine } = this;
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
