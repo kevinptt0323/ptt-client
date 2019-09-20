@@ -1,19 +1,23 @@
 import EventEmitter from 'eventemitter3';
+import Config from './config';
 
 class Socket extends EventEmitter {
+  private _config: Config;
+  private _socket: WebSocket;
+
   constructor(config) {
     super();
     this._config = config;
   }
 
-  connect() {
+  connect(): void {
     let socket;
     if (typeof WebSocket === 'undefined') {
       throw new Error(`'WebSocket' is undefined. Do you include any websocket polyfill?`);
     } else if (WebSocket.length === 1) {
       socket = new WebSocket(this._config.url);
     } else {
-      const options = {};
+      const options: any = {};
       if (this._config.origin)
         options.origin = this._config.origin;
       socket = new WebSocket(this._config.url, options);
@@ -32,20 +36,20 @@ class Socket extends EventEmitter {
         this.emit('message', data);
         data = [];
       }, this._config.timeout);
-      if (data.byteLength > this._config.blobSize) {
-        throw new Error(`Receive message length(${data.byteLength}) greater than buffer size(${this._config.blobSize})`);
+      if (currData.byteLength > this._config.blobSize) {
+        throw new Error(`Receive message length(${currData.byteLength}) greater than buffer size(${this._config.blobSize})`);
       }
     });
 
     this._socket = socket;
   }
 
-  disconnect() {
+  disconnect(): void {
     const socket = this._socket;
     socket.close();
   }
 
-  send(str) {
+  send(str: string): void {
     const socket = this._socket;
     if (socket.readyState == 1 /* OPEN */) {
       socket.send(str);

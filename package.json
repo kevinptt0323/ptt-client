@@ -3,10 +3,13 @@
   "version": "0.8.1",
   "description": "A Node client for fetching data from ptt.cc.",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.js",
   "scripts": {
-    "test": "mocha ./test/index.js",
-    "build": "$npm_execpath run build:babel",
-    "build:babel": "cross-env NODE_ENV=production babel ./src --out-dir ./dist"
+    "type:check": "tsc",
+    "type:declaration": "tsc --noEmit false --emitDeclarationOnly --declaration --declarationDir ./dist",
+    "test": "cross-env TS_NODE_PROJECT=tsconfig.test.json mocha ./test/index.ts",
+    "build": "$npm_execpath run build:babel && $npm_execpath run type:declaration",
+    "build:babel": "cross-env NODE_ENV=production babel ./src --out-dir ./dist --extensions '.ts'"
   },
   "repository": {
     "type": "git",
@@ -38,10 +41,16 @@
     "@babel/node": "^7.2.2",
     "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/plugin-proposal-export-default-from": "^7.2.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.5.5",
     "@babel/plugin-transform-runtime": "^7.4.0",
     "@babel/preset-env": "^7.4.2",
+    "@babel/preset-typescript": "^7.3.3",
     "@babel/register": "^7.4.0",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.7.1",
     "cross-env": "^5.2.0",
-    "mocha": "^6.1.4"
+    "mocha": "^6.1.4",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
   }
 }

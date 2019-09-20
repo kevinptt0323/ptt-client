@@ -1,23 +1,29 @@
 import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
 import Terminal from 'terminal.js';
-import decode from '../../utils/decode';
-import encode from '../../utils/encode';
 
-import key from '../../utils/keymap';
+import Socket from '../../socket';
+import {
+  decode,
+  encode,
+  keymap as key,
+} from '../../utils';
 import {
   getWidth,
   indexOfWidth,
   substrWidth,
 } from '../../utils/char';
+import Config from '../../config';
 
 import defaultConfig from './config';
+import {Article} from './Article';
+import {Board} from './Board';
 
-class Condition{
-  typeWord;
-  criteria;
+class Condition {
+  private typeWord: string;
+  private criteria: string;
 
-  constructor(type, criteria){
+  constructor(type: 'push'|'author'|'title', criteria: string) {
     switch (type) {
       case 'push':
         this.typeWord = 'Z';
@@ -34,7 +40,7 @@ class Condition{
     this.criteria = criteria;
   }
   
-  toSearchString() {
+  toSearchString(): string {
     return `${this.typeWord}${this.criteria}`;
   }
 }
@@ -58,35 +64,37 @@ class Bot extends EventEmitter {
       this.conditions.push(new Condition(type, criteria));
     }
   };
+
+  private config: Config;
+  private term: Terminal;
+  private _state: any;
+  private currentCharset: string;
+  private socket: Socket;
+  private preventIdleHandler: ReturnType<typeof setTimeout>;
   
-  constructor(config) {
+  constructor(config?: Config) {
     super();
     this.config = {...defaultConfig, ...config};
     this.init();
   }
 
-  init() {
+  async init(): Promise<void> {
     const { config } = this;
-    this._term = new Terminal(config.terminal);
+    this.term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
-    this._term.state.setMode('stringWidth', 'dbcs');
+    this.term.state.setMode('stringWidth', 'dbcs');
     this.currentCharset = 'big5';
 
-    let Socket;
     switch (config.protocol.toLowerCase()) {
       case 'websocket':
       case 'ws':
       case 'wss':
-        Socket = require("../../socket").default;
         break;
       case 'telnet':
       case 'ssh':
       default:
-        Socket = null;
-    }
-
-    if (Socket === null) {
-      throw `Invalid protocol: ${config.protocol}`;
+        throw `Invalid protocol: ${config.protocol}`;
+        break;
     }
 
     const socket = new Socket(config);
@@ -112,20 +120,20 @@ class Bot extends EventEmitter {
           this.currentCharset = this.config.charset;
         }
         const msg = decode(data, this.currentCharset);
-        this._term.write(msg);
-        this.emit('redraw', this._term.toString());
+        this.term.write(msg);
+        this.emit('redraw', this.term.toString());
       })
       .on('error', (err) => {
       });
     this.socket = socket;
   }
 
-  get state() {
+  get state(): any {
     return {...this._state};
   }
 
   getLine = (n) => {
-    return this._term.state.getLine(n);
+    return this.term.state.getLine(n);
   };
 
   async getLines() {
@@ -158,19 +166,26 @@ class Bot extends EventEmitter {
     return lines;
   }
 
-  async send(msg) {
+  send(msg: string): Promise<void> {
     this.config.preventIdleTimeout && this.preventIdle(this.config.preventIdleTimeout);
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       if (this.state.connect) {
-        this.socket.send(encode(msg, this.currentCharset));
-        this.once('message', msg => {
-          resolve(msg);
-        });
+        if (msg.length > 0) {
+          this.socket.send(encode(msg, this.currentCharset));
+          this.once('message', msg => {
+            resolve(msg);
+          });
+        } else {
+          console.warn(`Sending message with 0-length`);
+          resolve();
+        }
+      } else {
+        reject();
       }
     });
   }
 
-  preventIdle(timeout) {
+  preventIdle(timeout: number): void {
     clearTimeout(this.preventIdleHandler);
     if (this.state.login) {
       this.preventIdleHandler = setTimeout(async () => {
@@ -180,7 +195,7 @@ class Bot extends EventEmitter {
     }
   }
 
-  async login(username, password, kick=true) {
+  async login(username: string, password: string, kick: boolean=true): Promise<any> {
     if (this.state.login) return;
     username = username.replace(/,/g, '');
     if (this.config.charset === 'utf8') {
@@ -188,7 +203,7 @@ class Bot extends EventEmitter {
     }
     await this.send(`${username}${key.Enter}${password}${key.Enter}`);
     let ret;
-    while ((ret = await this._checkLogin(kick)) === null) {
+    while ((ret = await this.checkLogin(kick)) === null) {
       await sleep(400);
     }
     if (ret) {
@@ -203,7 +218,7 @@ class Bot extends EventEmitter {
     return ret;
   }
 
-  async logout() {
+  async logout(): Promise<boolean> {
     if (!this.state.login) return;
     await this.send(`G${key.Enter}Y${key.Enter.repeat(2)}`);
     this._state.login = false;
@@ -211,7 +226,7 @@ class Bot extends EventEmitter {
     return true;
   }
 
-  async _checkLogin(kick) {
+  private async checkLogin(kick: boolean): Promise<any> {
     const { getLine } = this;
 
     if (getLine(21).str.includes("密碼不對或無此帳號")) {
@@ -239,48 +254,40 @@ class Bot extends EventEmitter {
     return null;
   }
 
-  _checkArticleWithHeader() {
+  private checkArticleWithHeader(): boolean {
     const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
     return authorArea === "作者";
   }
 
-  setSearchCondition(type, criteria) {
+  setSearchCondition(type: string, criteria: string): void {
     this.searchCondition.add(type, criteria);
   }
   
-  resetSearchCondition() {
+  resetSearchCondition(): void {
     this.searchCondition.init();
   }
 
-  isSearchConditionSet() {
+  isSearchConditionSet(): boolean {
     return (this.searchCondition.conditions.length !== 0);
   }
 
-  async getArticles(boardname, offset=0) {
+  async getArticles(boardname: string, offset: number=0): Promise<Article[]> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
       let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
       await this.send(`${searchString}${key.Enter}`);
     }
 
-    offset |= 0;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
     }
     const { getLine } = this;
-    let articles = [];
+    let articles: Article[] = [];
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
-      const article = {
-        sn:     substrWidth('dbcs', line, 1,   7).trim() | 0,
-        push:   substrWidth('dbcs', line, 9,   2).trim(),
-        date:   substrWidth('dbcs', line, 11,  5).trim(),
-        author: substrWidth('dbcs', line, 17, 12).trim(),
-        status: substrWidth('dbcs', line, 30,  2).trim(),
-        title:  substrWidth('dbcs', line, 32    ).trim(),
-        fixed:  substrWidth('dbcs', line, 1,   7).trim().includes('★'),
-      };
+      const article = Article.fromLine(line);
+      article.boardname = boardname;
       articles.push(article);
     }
     // fix sn
@@ -299,7 +306,7 @@ class Bot extends EventEmitter {
     return articles.reverse();
   }
 
-  async getArticle(boardname, sn) {
+  async getArticle(boardname: string, sn: number, article: Article = new Article()): Promise<Article> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()){
       let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
@@ -309,17 +316,12 @@ class Bot extends EventEmitter {
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
-    const hasHeader = this._checkArticleWithHeader();
+    const hasHeader = this.checkArticleWithHeader();
 
-    let article = {
-      sn,
-      author: "",
-      title: "",
-      timestamp: "",
-      lines: [],
-    };
+    article.sn = sn;
+    article.boardname = boardname;
 
-    if (this._checkArticleWithHeader()) {
+    if (hasHeader) {
       article.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
       article.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
       article.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
@@ -331,17 +333,14 @@ class Bot extends EventEmitter {
     return article;
   }
 
-  async getFavorite(offsets=[]) {
-    if (typeof offsets === "string") {
-      offsets |= 0;
-    }
+  async getFavorite(offsets: number|number[]=[]) {
     if (typeof offsets === "number") {
       offsets = [offsets];
     }
     await this.enterFavorite(offsets);
     const { getLine } = this;
 
-    const favorites = [];
+    const favorites: Board[] = [];
 
     while (true) {
       let stopLoop = false;
@@ -351,42 +350,10 @@ class Bot extends EventEmitter {
           stopLoop = true;
           break;
         }
-        let favorite = {
-          bn:        substrWidth('dbcs', line,  3,  4).trim() | 0,
-          read:      substrWidth('dbcs', line,  8,  2).trim() === '',
-          boardname: substrWidth('dbcs', line, 10, 12).trim(),
-          category:  substrWidth('dbcs', line, 23,  4).trim(),
-          title:     substrWidth('dbcs', line, 30, 31),
-          users:     substrWidth('dbcs', line, 62,  5).trim(),
-          admin:     substrWidth('dbcs', line, 67    ).trim(),
-          folder:    false,
-          divider:   false,
-        };
+        let favorite = Board.fromLine(line);
         if (favorite.bn !== favorites.length + 1) {
           stopLoop = true;
           break;
-        }
-        switch (favorite.boardname) {
-          case 'MyFavFolder':
-            favorite = {
-              ...favorite,
-              title:  substrWidth('dbcs', line, 30),
-              users: '',
-              admin: '',
-              folder: true,
-            };
-            break;
-          case '------------':
-            favorite = {
-              ...favorite,
-              title:  substrWidth('dbcs', line, 30),
-              users: '',
-              admin: '',
-              divider: true,
-            };
-            break;
-          default:
-            break;
         }
         favorites.push(favorite);
       }
@@ -400,9 +367,8 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
-  async getMails(offset=0) {
+  async getMails(offset: number=0) {
     await this.enterMail();
-    offset |= 0;
     if (offset > 0) {
       offset = Math.max(offset-9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
@@ -414,7 +380,7 @@ class Bot extends EventEmitter {
     for(let i=3; i<=22; i++) {
       const line = getLine(i).str;
       const mail = {
-        sn:     substrWidth('dbcs', line, 1,   5).trim() | 0,
+        sn:    +substrWidth('dbcs', line, 1,   5).trim(),
         date:   substrWidth('dbcs', line, 9,   5).trim(),
         author: substrWidth('dbcs', line, 15, 12).trim(),
         status: substrWidth('dbcs', line, 30,  2).trim(),
@@ -427,13 +393,13 @@ class Bot extends EventEmitter {
     return mails.reverse();
   }
 
-  async getMail(sn) {
+  async getMail(sn: number) {
     await this.enterMail();
     const { getLine } = this;
 
     await this.send(`${sn}${key.Enter}${key.Enter}`);
 
-    const hasHeader = this._checkArticleWithHeader();
+    const hasHeader = this.checkArticleWithHeader();
 
     let mail = {
       sn,
@@ -443,7 +409,7 @@ class Bot extends EventEmitter {
       lines: [],
     };
 
-    if (this._checkArticleWithHeader()) {
+    if (this.checkArticleWithHeader()) {
       mail.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
       mail.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
       mail.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
@@ -455,12 +421,12 @@ class Bot extends EventEmitter {
     return mail;
   }
 
-  async enterIndex() {
+  async enterIndex(): Promise<boolean> {
     await this.send(`${key.ArrowLeft.repeat(10)}`);
     return true;
   }
 
-  async enterBoard(boardname) {
+  async enterBoard(boardname: string): Promise<boolean> {
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
     const { getLine } = this;
@@ -476,14 +442,14 @@ class Bot extends EventEmitter {
     return false;
   }
 
-  async enterFavorite(offsets=[]) {
+  async enterFavorite(offsets: number[]=[]): Promise<boolean> {
     const enterOffsetMessage =
       offsets.map(offset => `${offset}${key.Enter.repeat(2)}`).join();
     await this.send(`F${key.Enter}${key.Home}${enterOffsetMessage}`);
     return true;
   }
 
-  async enterMail() {
+  async enterMail(): Promise<boolean> {
     await this.send(`M${key.Enter}R${key.Enter}${key.Home}${key.End}`);
     return true;
   }

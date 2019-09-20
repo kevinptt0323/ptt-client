@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"moduleResolution": "node",
+		"module": "commonjs",
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"noEmit": true
+	},
+	"include": [
+		"test/*.ts"
+	]
+}
