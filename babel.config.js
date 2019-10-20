@@ -12,6 +12,7 @@ module.exports = function(api) {
       ["@babel/plugin-proposal-class-properties", { loose: false }],
       "@babel/plugin-proposal-object-rest-spread",
       ["@babel/plugin-transform-runtime", { regenerator: true }],
+      "@babel/plugin-transform-named-capturing-groups-regex",
     ]
   }
   return config;

@@ -16,8 +16,7 @@ import {
 import Config from '../../config';
 
 import defaultConfig from './config';
-import {Article} from './Article';
-import {Board} from './Board';
+import {Article, Board} from './model';
 
 class Condition {
   private typeWord: string;
@@ -142,11 +141,13 @@ class Bot extends EventEmitter {
 
     lines.push(getLine(0).str);
 
+    let sentPgDown = false;
     while (!getLine(23).str.includes('100%')) {
       for (let i = 1; i < 23; i++) {
         lines.push(getLine(i).str);
       }
       await this.send(key.PgDown);
+      sentPgDown = true;
     }
 
     const lastLine = lines[lines.length - 1];
@@ -159,27 +160,37 @@ class Bot extends EventEmitter {
       }
     }
 
-    while (lines.length > 0 && lines[lines.length - 1].length === 0) {
+    while (lines.length > 0 && lines[lines.length - 1] === '') {
       lines.pop();
     }
 
+    if (sentPgDown) {
+      await this.send(key.Home);
+    }
     return lines;
   }
 
-  send(msg: string): Promise<void> {
+  send(msg: string): Promise<boolean> {
     if (this.config.preventIdleTimeout) {
         this.preventIdle(this.config.preventIdleTimeout);
     }
     return new Promise((resolve, reject) => {
+      let autoResolveHandler;
+      const cb = message => {
+        clearTimeout(autoResolveHandler);
+        resolve(true);
+      };
       if (this.state.connect) {
         if (msg.length > 0) {
           this.socket.send(encode(msg, this.currentCharset));
-          this.once('message', message => {
-            resolve(message);
-          });
+          this.once('message', cb);
+          autoResolveHandler = setTimeout(() => {
+            this.removeListener('message', cb);
+            resolve(false);
+          }, this.config.timeout * 10);
         } else {
           console.warn(`Sending message with 0-length`);
-          resolve();
+          resolve(true);
         }
       } else {
         reject();
@@ -222,9 +233,10 @@ class Bot extends EventEmitter {
 
   async logout(): Promise<boolean> {
     if (!this.state.login) { return; }
-    await this.send(`G${key.Enter}Y${key.Enter.repeat(2)}`);
+    await this.send(`G${key.Enter}Y${key.Enter}`);
     this._state.login = false;
     this.emit('stateChange', this.state);
+    this.send(key.Enter);
     return true;
   }
 
@@ -261,18 +273,34 @@ class Bot extends EventEmitter {
     return authorArea === '作者';
   }
 
+  select(model) {
+    return model.select(this);
+  }
+
+  /**
+   * @deprecated
+   */
   setSearchCondition(type: string, criteria: string): void {
     this.searchCondition.add(type, criteria);
   }
 
+  /**
+   * @deprecated
+   */
   resetSearchCondition(): void {
     this.searchCondition.init();
   }
 
+  /**
+   * @deprecated
+   */
   isSearchConditionSet(): boolean {
     return (this.searchCondition.conditions.length !== 0);
   }
 
+  /**
+   * @deprecated
+   */
   async getArticles(boardname: string, offset: number= 0): Promise<Article[]> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()) {
@@ -292,23 +320,26 @@ class Bot extends EventEmitter {
       article.boardname = boardname;
       articles.push(article);
     }
-    // fix sn
-    if (articles.length >= 2 && articles[0].sn === 0) {
+    // fix id
+    if (articles.length >= 2 && articles[0].id === 0) {
       for (let i = 1; i < articles.length; i++) {
-        if (articles[i].sn !== 0) {
-          articles[0].sn = articles[i].sn - i;
+        if (articles[i].id !== 0) {
+          articles[0].id = articles[i].id - i;
           break;
         }
       }
     }
     for (let i = 1; i < articles.length; i++) {
-      articles[i].sn = articles[i - 1].sn + 1;
+      articles[i].id = articles[i - 1].id + 1;
     }
     await this.enterIndex();
     return articles.reverse();
   }
 
-  async getArticle(boardname: string, sn: number, article: Article = new Article()): Promise<Article> {
+  /**
+   * @deprecated
+   */
+  async getArticle(boardname: string, id: number, article: Article = new Article()): Promise<Article> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()) {
       const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
@@ -316,11 +347,11 @@ class Bot extends EventEmitter {
     }
     const { getLine } = this;
 
-    await this.send(`${sn}${key.Enter}${key.Enter}`);
+    await this.send(`${id}${key.Enter}${key.Enter}`);
 
     const hasHeader = this.checkArticleWithHeader();
 
-    article.sn = sn;
+    article.id = id;
     article.boardname = boardname;
 
     if (hasHeader) {
@@ -335,6 +366,9 @@ class Bot extends EventEmitter {
     return article;
   }
 
+  /**
+   * @deprecated
+   */
   async getFavorite(offsets: number|number[]= []) {
     if (typeof offsets === 'number') {
       offsets = [offsets];
@@ -353,7 +387,7 @@ class Bot extends EventEmitter {
           break;
         }
         const favorite = Board.fromLine(line);
-        if (favorite.bn !== favorites.length + 1) {
+        if (favorite.id !== favorites.length + 1) {
           stopLoop = true;
           break;
         }
@@ -428,27 +462,80 @@ class Bot extends EventEmitter {
     return true;
   }
 
-  async enterBoard(boardname: string): Promise<boolean> {
-    await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
-    boardname = boardname.toLowerCase();
-    const { getLine } = this;
-
-    if (getLine(23).str.includes('按任意鍵繼續')) {
-      await this.send(` `);
+  get currentBoardname(): string|undefined {
+    const boardRe = /【(?!看板列表).*】.*《(?<boardname>.*)》/;
+    const match = boardRe.exec(this.getLine(0).str);
+    if (match) {
+      return match.groups.boardname;
+    } else {
+      return void 0;
     }
-    if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
-      this._state.position.boardname = boardname;
+  }
+
+  /**
+   * @deprecated
+   */
+  enterBoard(boardname: string): Promise<boolean> {
+    return this.enterBoardByName(boardname);
+  }
+
+  async enterBoardByName(boardname: string): Promise<boolean> {
+    await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
+
+    if (this.currentBoardname.toLowerCase() === boardname.toLowerCase()) {
+      this._state.position.boardname = this.currentBoardname;
       this.emit('stateChange', this.state);
       return true;
+    } else {
+      await this.enterIndex();
+      return false;
     }
-    return false;
+  }
+
+  async enterByOffset(offsets: number[]= []): Promise<boolean> {
+    const { getLine } = this;
+    let result = true;
+    offsets.forEach(async offset => {
+      if (offset === 0) {
+        result = false;
+      }
+      if (offset < 0) {
+        for (let i = 22; i >= 3; i--) {
+          const lastOffset = substrWidth('dbcs', getLine(i).str, 3, 4).trim();
+          if (lastOffset.length > 0) {
+            offset += +lastOffset + 1;
+            break;
+          }
+        }
+      }
+      if (offset < 0) {
+        result = false;
+      }
+      if (!result) {
+        return;
+      }
+      await this.send(`${offset}${key.Enter.repeat(2)} ${key.Home}${key.End}`);
+    });
+
+    if (result) {
+      this._state.position.boardname = this.currentBoardname;
+      this.emit('stateChange', this.state);
+      await this.send(key.Home);
+      return true;
+    } else {
+      await this.enterIndex();
+      return false;
+    }
+  }
+
+  async enterBoardByOffset(offsets: number[]= []): Promise<boolean> {
+    await this.send(`C${key.Enter}`);
+    return await this.enterByOffset(offsets);
   }
 
   async enterFavorite(offsets: number[]= []): Promise<boolean> {
-    const enterOffsetMessage =
-      offsets.map(offset => `${offset}${key.Enter.repeat(2)}`).join();
-    await this.send(`F${key.Enter}${key.Home}${enterOffsetMessage}`);
-    return true;
+    await this.send(`F${key.Enter}`);
+    return await this.enterByOffset(offsets);
   }
 
   async enterMail(): Promise<boolean> {
