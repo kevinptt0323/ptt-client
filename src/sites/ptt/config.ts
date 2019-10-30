@@ -4,7 +4,7 @@ const config: Config = {
   name: 'PTT',
   url: 'wss://ws.ptt.cc/bbs',
   charset: 'utf8',
-  origin: 'https://www.ptt.cc',
+  origin: 'app://pcman',
   protocol: 'websocket',
   timeout: 200,
   blobSize: 1024,
