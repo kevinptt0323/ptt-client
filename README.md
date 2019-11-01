@@ -14,41 +14,60 @@ npm install ptt-client
 
 ## Example
 ```js
-import PTT from 'ptt-client';
+import Ptt from 'ptt-client';
+import {Article, Board} from 'ptt-client/sites/ptt/model';
 
 // if you are using this module in node.js, 'ws' is required as WebSocket polyfill.
 // you don't need this in modern browsers
 global.WebSocket = require('ws');
 
 (async function() {
-  const ptt = new PTT();
+  const ptt = new Ptt();
 
   ptt.once('connect', () => {
 
     const kickOther = true;
-    if (!await ptt.login('guest', 'guest', kickOther))
+    if (!await ptt.login('username', 'password', kickOther))
       return;
   
     // get last 20 articles from specific board. the first one is the latest
-    let articles = await ptt.getArticles('C_Chat');
+    let query = ptt.select(Article).where('boardname', 'C_Chat');
+    let article = await query.get();
 
     // get articles with offset 
-    let offset = articles[article.length-1].sn - 1;
-    let articles2 = await ptt.getArticles('C_Chat', offset);
+    let offset = articles[article.length-1].id - 1;
+    query.where('id', offset);
+    let articles2 = await query.get();
 
     // get articles with search filter (type: 'push', 'author', 'title')
-    ptt.setSearchCondition('title', '閒聊');
-    articles2 = await ptt.getArticles('C_Chat');
+    query = ptt.select(Article)
+      .where('boardname', 'C_Chat')
+      .where('title', '閒聊')
+      .where('title', '京阿尼')
+      .where('push', '20');
+    articles = await query.get();
   
     // get the content of specific article
-    let article = await ptt.getArticle('C_Chat', articles[articles.length-1].sn);
+    query.where('id', articles[articles.length-1].id);
+    let article = await query.getOne();
+
+    // get board list
+    query = ptt.select(Board).where('entry', 'class');
+    let classBoards = await query.get();
+
+    // get hot board list
+    query = ptt.select(Board).where('entry', 'hot');
+    let hotBoards = await query.get();
   
     // get your favorite list
-    let favorites = await ptt.getFavorite();
+    query = ptt.select(Board).where('entry', 'favorite');
+    let favorites = await query.get();
   
     // get favorite list in a folder
-    if (favorites[0].folder)
-      await ptt.getFavorite(favorites[0].bn);
+    if (favorites[0].folder) {
+      query.where('offsets', [favorites[0].id]);
+      let favorites2 = await query.get();
+    }
 
     let mails = await ptt.getMails();
 
