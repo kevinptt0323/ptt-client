@@ -16,8 +16,8 @@ export class Article {
   }
 
   static fromLine(line: string): Article {
-    let article = new Article();
-    article.sn     =+substrWidth('dbcs', line, 1,   7).trim();
+    const article = new Article();
+    article.sn     = +substrWidth('dbcs', line, 1,   7).trim();
     article.push   = substrWidth('dbcs', line, 9,   2).trim();
     article.date   = substrWidth('dbcs', line, 11,  5).trim();
     article.author = substrWidth('dbcs', line, 17, 12).trim();
@@ -27,7 +27,7 @@ export class Article {
     return article;
   }
 
-  get content(): ReadonlyArray<string> { 
+  get content(): ReadonlyArray<string> {
     return this._content;
   }
   set content(data: ReadonlyArray<string>) {
@@ -42,6 +42,6 @@ export class Article {
   set lines(data: ReadonlyArray<string>) {
     this.content = data;
   }
-};
+}
 
 export default Article;

@@ -2,7 +2,7 @@ import { encodeSync } from 'uao-js';
 
 const encode = (str, charset) => {
   let buffer;
-  switch(charset) {
+  switch (charset) {
     case 'utf8':
     case 'utf-8':
       buffer = Buffer.from(str, 'utf8');

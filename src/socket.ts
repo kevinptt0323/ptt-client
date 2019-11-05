@@ -18,8 +18,9 @@ class Socket extends EventEmitter {
       socket = new WebSocket(this._config.url);
     } else {
       const options: any = {};
-      if (this._config.origin)
+      if (this._config.origin) {
         options.origin = this._config.origin;
+      }
       socket = new WebSocket(this._config.url, options);
     }
     socket.addEventListener('open',  this.emit.bind(this, 'connect'));
@@ -28,7 +29,7 @@ class Socket extends EventEmitter {
 
     let data = [];
     let timeoutHandler;
-    socket.binaryType = "arraybuffer";
+    socket.binaryType = 'arraybuffer';
     socket.addEventListener('message', ({ data: currData }) => {
       clearTimeout(timeoutHandler);
       data.push(...new Uint8Array(currData));
@@ -51,7 +52,7 @@ class Socket extends EventEmitter {
 
   send(str: string): void {
     const socket = this._socket;
-    if (socket.readyState == 1 /* OPEN */) {
+    if (socket.readyState === 1 /* OPEN */) {
       socket.send(str);
     }
   }

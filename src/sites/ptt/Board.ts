@@ -8,15 +8,15 @@ export class Board {
   title: string;
   users: string;
   admin: string;
-  folder: boolean = false;
-  divider: boolean = false;
+  folder = false;
+  divider = false;
 
   constructor() {
   }
 
   static fromLine(line: string): Board {
-    let board = new Board();
-    board.bn        =+substrWidth('dbcs', line,  3,  4).trim();
+    const board = new Board();
+    board.bn        = +substrWidth('dbcs', line,  3,  4).trim();
     board.read      = substrWidth('dbcs', line,  8,  2).trim() === '';
     board.boardname = substrWidth('dbcs', line, 10, 12).trim();
     board.category  = substrWidth('dbcs', line, 23,  4).trim();
@@ -42,4 +42,4 @@ export class Board {
     return board;
   }
 
-};
+}
