@@ -1,7 +1,7 @@
 import wcwidth from 'wcwidth';
 
 export function dbcswidth(str: string): number {
-	return str.split("").reduce(function(sum, c) {
+	return str.split('').reduce(function(sum, c) {
 		return sum + (c.charCodeAt(0) > 255 ? 2 : 1);
 	}, 0);
 }
@@ -19,7 +19,7 @@ export function getWidth(widthType: string, str: string): number {
 		case 'dbcs':
 			return dbcswidth(str);
 		default:
-			throw `Invalid widthType "${widthType}"`;
+			throw new Error(`Invalid widthType "${widthType}"`);
 	}
 }
 
@@ -30,11 +30,13 @@ export function getWidth(widthType: string, str: string): number {
 * @params {number} width - the width of target string
 */
 export function indexOfWidth(widthType: string, str: string, width?: number): number {
-	if (widthType === 'length')
+	if (widthType === 'length') {
 		return getWidth(widthType, str);
-	for (var i = 0; i <= str.length; i++) {
-		if (getWidth(widthType, str.substr(0, i)) > width)
+	}
+	for (let i = 0; i <= str.length; i++) {
+		if (getWidth(widthType, str.substr(0, i)) > width) {
 			return i - 1;
+		}
 	}
 	return str.length;
 }
@@ -49,10 +51,10 @@ export function indexOfWidth(widthType: string, str: string, width?: number): nu
 * @params {number} width - the width of target string
 */
 export function substrWidth(widthType: string, str: string, startWidth: number, width?: number): string {
-	var ignoreWidth = typeof width === 'undefined';
-	var length = width;
-	var start = startWidth;
-	var prefixSpace = 0, suffixSpace = 0;
+	const ignoreWidth = typeof width === 'undefined';
+	let length = width;
+	let start = startWidth;
+	let prefixSpace = 0, suffixSpace = 0;
 	if (widthType !== 'length') {
 		start = indexOfWidth(widthType, str, startWidth);
 		if (getWidth(widthType, str.substr(0, start)) < startWidth) {
@@ -65,6 +67,6 @@ export function substrWidth(widthType: string, str: string, startWidth: number, 
 				(prefixSpace + getWidth(widthType, str.substr(start, length)));
 		}
 	}
-	var substr = ignoreWidth ? str.substr(start) : str.substr(start, length);
-	return " ".repeat(prefixSpace) + substr + " ".repeat(suffixSpace);
+	const substr = ignoreWidth ? str.substr(start) : str.substr(start, length);
+	return ' '.repeat(prefixSpace) + substr + ' '.repeat(suffixSpace);
 }

@@ -35,11 +35,11 @@ class Condition {
         this.typeWord = '/';
         break;
       default:
-        throw `Invalid condition: ${type}`;
+        throw new Error(`Invalid condition: ${type}`);
     }
     this.criteria = criteria;
   }
-  
+
   toSearchString(): string {
     return `${this.typeWord}${this.criteria}`;
   }
@@ -71,7 +71,7 @@ class Bot extends EventEmitter {
   private currentCharset: string;
   private socket: Socket;
   private preventIdleHandler: ReturnType<typeof setTimeout>;
-  
+
   constructor(config?: Config) {
     super();
     this.config = {...defaultConfig, ...config};
@@ -93,7 +93,7 @@ class Bot extends EventEmitter {
       case 'telnet':
       case 'ssh':
       default:
-        throw `Invalid protocol: ${config.protocol}`;
+        throw new Error(`Invalid protocol: ${config.protocol}`);
         break;
     }
 
@@ -134,7 +134,7 @@ class Bot extends EventEmitter {
 
   getLine = (n) => {
     return this.term.state.getLine(n);
-  };
+  }
 
   async getLines() {
     const { getLine } = this;
@@ -142,24 +142,24 @@ class Bot extends EventEmitter {
 
     lines.push(getLine(0).str);
 
-    while (!getLine(23).str.includes("100%")) {
-      for(let i=1; i<23; i++) {
+    while (!getLine(23).str.includes('100%')) {
+      for (let i = 1; i < 23; i++) {
         lines.push(getLine(i).str);
       }
       await this.send(key.PgDown);
     }
 
-    const lastLine = lines[lines.length-1];
-    for(let i=0; i<23; i++) {
+    const lastLine = lines[lines.length - 1];
+    for (let i = 0; i < 23; i++) {
       if (getLine(i).str == lastLine) {
-        for(let j=i+1; j<23; j++) {
+        for (let j = i + 1; j < 23; j++) {
           lines.push(getLine(j).str);
         }
         break;
       }
     }
 
-    while (lines.length > 0 && lines[lines.length-1].length == 0) {
+    while (lines.length > 0 && lines[lines.length - 1].length == 0) {
       lines.pop();
     }
 
@@ -195,8 +195,8 @@ class Bot extends EventEmitter {
     }
   }
 
-  async login(username: string, password: string, kick: boolean=true): Promise<any> {
-    if (this.state.login) return;
+  async login(username: string, password: string, kick: boolean= true): Promise<any> {
+    if (this.state.login) { return; }
     username = username.replace(/,/g, '');
     if (this.config.charset === 'utf8') {
       username += ',';
@@ -210,7 +210,7 @@ class Bot extends EventEmitter {
       const { _state: state } = this;
       state.login = true;
       state.position = {
-        boardname: "",
+        boardname: '',
       };
       this.searchCondition.init();
       this.emit('stateChange', this.state);
@@ -219,7 +219,7 @@ class Bot extends EventEmitter {
   }
 
   async logout(): Promise<boolean> {
-    if (!this.state.login) return;
+    if (!this.state.login) { return; }
     await this.send(`G${key.Enter}Y${key.Enter.repeat(2)}`);
     this._state.login = false;
     this.emit('stateChange', this.state);
@@ -229,23 +229,23 @@ class Bot extends EventEmitter {
   private async checkLogin(kick: boolean): Promise<any> {
     const { getLine } = this;
 
-    if (getLine(21).str.includes("密碼不對或無此帳號")) {
+    if (getLine(21).str.includes('密碼不對或無此帳號')) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(23).str.includes("請稍後再試")) {
+    } else if (getLine(23).str.includes('請稍後再試')) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(22).str.includes("您想刪除其他重複登入的連線嗎")) {
-      await this.send(`${key.Backspace}${kick?'y':'n'}${key.Enter}`);
-    } else if (getLine(23).str.includes("請勿頻繁登入以免造成系統過度負荷")) {
+    } else if (getLine(22).str.includes('您想刪除其他重複登入的連線嗎')) {
+      await this.send(`${key.Backspace}${kick ? 'y' : 'n'}${key.Enter}`);
+    } else if (getLine(23).str.includes('請勿頻繁登入以免造成系統過度負荷')) {
       await this.send(`${key.Enter}`);
-    } else if (getLine(23).str.includes("按任意鍵繼續")) {
+    } else if (getLine(23).str.includes('按任意鍵繼續')) {
       await this.send(`${key.Enter}`);
-    } else if (getLine(23).str.includes("您要刪除以上錯誤嘗試的記錄嗎")) {
+    } else if (getLine(23).str.includes('您要刪除以上錯誤嘗試的記錄嗎')) {
       await this.send(`${key.Backspace}y${key.Enter}`);
-    } else if ((getLine(22).str+getLine(23).str).toLowerCase().includes("y/n")) {
+    } else if ((getLine(22).str + getLine(23).str).toLowerCase().includes('y/n')) {
       await this.send(`${key.Backspace}y${key.Enter}`);
-    } else if (getLine(23).str.includes("我是")) {
+    } else if (getLine(23).str.includes('我是')) {
       this.emit('login.success');
       return true;
     } else {
@@ -256,13 +256,13 @@ class Bot extends EventEmitter {
 
   private checkArticleWithHeader(): boolean {
     const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
-    return authorArea === "作者";
+    return authorArea === '作者';
   }
 
   setSearchCondition(type: string, criteria: string): void {
     this.searchCondition.add(type, criteria);
   }
-  
+
   resetSearchCondition(): void {
     this.searchCondition.init();
   }
@@ -271,20 +271,20 @@ class Bot extends EventEmitter {
     return (this.searchCondition.conditions.length !== 0);
   }
 
-  async getArticles(boardname: string, offset: number=0): Promise<Article[]> {
+  async getArticles(boardname: string, offset: number= 0): Promise<Article[]> {
     await this.enterBoard(boardname);
-    if (this.isSearchConditionSet()){
-      let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
+    if (this.isSearchConditionSet()) {
+      const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
       await this.send(`${searchString}${key.Enter}`);
     }
 
     if (offset > 0) {
-      offset = Math.max(offset-9, 1);
+      offset = Math.max(offset - 9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
     }
     const { getLine } = this;
-    let articles: Article[] = [];
-    for(let i=3; i<=22; i++) {
+    const articles: Article[] = [];
+    for (let i = 3; i <= 22; i++) {
       const line = getLine(i).str;
       const article = Article.fromLine(line);
       article.boardname = boardname;
@@ -292,15 +292,15 @@ class Bot extends EventEmitter {
     }
     // fix sn
     if (articles.length >= 2 && articles[0].sn === 0) {
-      for(let i=1; i<articles.length; i++) {
+      for (let i = 1; i < articles.length; i++) {
         if (articles[i].sn !== 0) {
           articles[0].sn = articles[i].sn - i;
           break;
         }
       }
     }
-    for(let i=1; i<articles.length; i++) {
-      articles[i].sn = articles[i-1].sn+1;
+    for (let i = 1; i < articles.length; i++) {
+      articles[i].sn = articles[i - 1].sn + 1;
     }
     await this.enterIndex();
     return articles.reverse();
@@ -308,8 +308,8 @@ class Bot extends EventEmitter {
 
   async getArticle(boardname: string, sn: number, article: Article = new Article()): Promise<Article> {
     await this.enterBoard(boardname);
-    if (this.isSearchConditionSet()){
-      let searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
+    if (this.isSearchConditionSet()) {
+      const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
       await this.send(`${searchString}${key.Enter}`);
     }
     const { getLine } = this;
@@ -333,8 +333,8 @@ class Bot extends EventEmitter {
     return article;
   }
 
-  async getFavorite(offsets: number|number[]=[]) {
-    if (typeof offsets === "number") {
+  async getFavorite(offsets: number|number[]= []) {
+    if (typeof offsets === 'number') {
       offsets = [offsets];
     }
     await this.enterFavorite(offsets);
@@ -344,13 +344,13 @@ class Bot extends EventEmitter {
 
     while (true) {
       let stopLoop = false;
-      for(let i=3; i<23; i++) {
-        let line = getLine(i).str;
+      for (let i = 3; i < 23; i++) {
+        const line = getLine(i).str;
         if (line.trim() === '') {
           stopLoop = true;
           break;
         }
-        let favorite = Board.fromLine(line);
+        const favorite = Board.fromLine(line);
         if (favorite.bn !== favorites.length + 1) {
           stopLoop = true;
           break;
@@ -367,17 +367,17 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
-  async getMails(offset: number=0) {
+  async getMails(offset: number= 0) {
     await this.enterMail();
     if (offset > 0) {
-      offset = Math.max(offset-9, 1);
+      offset = Math.max(offset - 9, 1);
       await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
     }
 
     const { getLine } = this;
 
-    let mails = [];
-    for(let i=3; i<=22; i++) {
+    const mails = [];
+    for (let i = 3; i <= 22; i++) {
       const line = getLine(i).str;
       const mail = {
         sn:    +substrWidth('dbcs', line, 1,   5).trim(),
@@ -401,11 +401,11 @@ class Bot extends EventEmitter {
 
     const hasHeader = this.checkArticleWithHeader();
 
-    let mail = {
+    const mail = {
       sn,
-      author: "",
-      title: "",
-      timestamp: "",
+      author: '',
+      title: '',
+      timestamp: '',
       lines: [],
     };
 
@@ -430,8 +430,8 @@ class Bot extends EventEmitter {
     await this.send(`s${boardname}${key.Enter} ${key.Home}${key.End}`);
     boardname = boardname.toLowerCase();
     const { getLine } = this;
-    
-    if (getLine(23).str.includes("按任意鍵繼續")) {
+
+    if (getLine(23).str.includes('按任意鍵繼續')) {
       await this.send(` `);
     }
     if (getLine(0).str.toLowerCase().includes(`${boardname}`)) {
@@ -442,7 +442,7 @@ class Bot extends EventEmitter {
     return false;
   }
 
-  async enterFavorite(offsets: number[]=[]): Promise<boolean> {
+  async enterFavorite(offsets: number[]= []): Promise<boolean> {
     const enterOffsetMessage =
       offsets.map(offset => `${offset}${key.Enter.repeat(2)}`).join();
     await this.send(`F${key.Enter}${key.Home}${enterOffsetMessage}`);

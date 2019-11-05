@@ -58,7 +58,7 @@ describe('Connection', () => {
       });
     });
   });
-  describe('logout', () => {
+  /* describe('logout', () => {
     it('should logout successfully if user is login', () => {
       const ptt = new pttbot();
       return new Promise((resolve, reject) => {
@@ -77,5 +77,5 @@ describe('Connection', () => {
         });
       });
     })
-  });
+  }); */
 });

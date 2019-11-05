@@ -2,7 +2,7 @@ import { decodeSync } from 'uao-js';
 
 const decode = (data, charset) => {
   let str = '';
-  switch(charset) {
+  switch (charset) {
     case 'utf8':
     case 'utf-8':
       str = Buffer.from(data).toString('utf8');
