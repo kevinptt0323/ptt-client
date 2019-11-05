@@ -115,7 +115,7 @@ class Bot extends EventEmitter {
         this.emit('stateChange', this.state);
       })
       .on('message', (data) => {
-        if (this.currentCharset != this.config.charset && !this.state.login &&
+        if (this.currentCharset !== this.config.charset && !this.state.login &&
             decode(data, 'utf8').includes('登入中，請稍候...')) {
           this.currentCharset = this.config.charset;
         }
@@ -151,7 +151,7 @@ class Bot extends EventEmitter {
 
     const lastLine = lines[lines.length - 1];
     for (let i = 0; i < 23; i++) {
-      if (getLine(i).str == lastLine) {
+      if (getLine(i).str === lastLine) {
         for (let j = i + 1; j < 23; j++) {
           lines.push(getLine(j).str);
         }
@@ -159,7 +159,7 @@ class Bot extends EventEmitter {
       }
     }
 
-    while (lines.length > 0 && lines[lines.length - 1].length == 0) {
+    while (lines.length > 0 && lines[lines.length - 1].length === 0) {
       lines.pop();
     }
 

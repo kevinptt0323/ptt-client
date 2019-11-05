@@ -52,7 +52,7 @@ class Socket extends EventEmitter {
 
   send(str: string): void {
     const socket = this._socket;
-    if (socket.readyState == 1 /* OPEN */) {
+    if (socket.readyState === 1 /* OPEN */) {
       socket.send(str);
     }
   }
