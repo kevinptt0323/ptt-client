@@ -10,7 +10,7 @@
     "test": "cross-env TS_NODE_PROJECT=tsconfig.test.json mocha ./test/index.ts",
     "build": "$npm_execpath run build:babel && $npm_execpath run type:declaration",
     "build:babel": "cross-env NODE_ENV=production babel ./src --out-dir ./dist --extensions '.ts'",
-    "lint": "tslint -r tslint.json src/**/*.ts"
+    "lint": "tslint -c tslint.json src/**/*.ts"
   },
   "repository": {
     "type": "git",

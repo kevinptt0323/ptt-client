@@ -1,15 +1,15 @@
 import wcwidth from 'wcwidth';
 
 export function dbcswidth(str: string): number {
-    return str.split('').reduce(function(sum, c) {
+    return str.split('').reduce((sum, c) => {
         return sum + (c.charCodeAt(0) > 255 ? 2 : 1);
     }, 0);
 }
 /**
-* calculate width of string.
-* @params {string} widthType - calculate width by wcwidth or String.length
-* @params {string} str - string to calculate
-*/
+ * calculate width of string.
+ * @params {string} widthType - calculate width by wcwidth or String.length
+ * @params {string} str - string to calculate
+ */
 export function getWidth(widthType: string, str: string): number {
     switch (widthType) {
         case 'length':
@@ -24,11 +24,11 @@ export function getWidth(widthType: string, str: string): number {
 }
 
 /**
-* calculate the position that the prefix of string is a specific width
-* @params {string} widthType - calculate width by wcwidth or String.length
-* @params {string} str - string to calculate
-* @params {number} width - the width of target string
-*/
+ * calculate the position that the prefix of string is a specific width
+ * @params {string} widthType - calculate width by wcwidth or String.length
+ * @params {string} str - string to calculate
+ * @params {number} width - the width of target string
+ */
 export function indexOfWidth(widthType: string, str: string, width?: number): number {
     if (widthType === 'length') {
         return getWidth(widthType, str);
@@ -42,14 +42,14 @@ export function indexOfWidth(widthType: string, str: string, width?: number): nu
 }
 
 /**
-* extract parts of string, beginning at the character at the specified position,
-* and returns the specified width of characters. if the character is incomplete,
-* it will be replaced by space.
-* @params {string} widthType - calculate width by wcwidth or String.length
-* @params {string} str - string to calculate
-* @params {number} startWidth - the beginning position of string
-* @params {number} width - the width of target string
-*/
+ * extract parts of string, beginning at the character at the specified position,
+ * and returns the specified width of characters. if the character is incomplete,
+ * it will be replaced by space.
+ * @params {string} widthType - calculate width by wcwidth or String.length
+ * @params {string} str - string to calculate
+ * @params {number} startWidth - the beginning position of string
+ * @params {number} width - the width of target string
+ */
 export function substrWidth(widthType: string, str: string, startWidth: number, width?: number): string {
     const ignoreWidth = typeof width === 'undefined';
     let length = width;

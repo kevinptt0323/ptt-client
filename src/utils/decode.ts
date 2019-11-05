@@ -1,6 +1,6 @@
 import { decodeSync } from 'uao-js';
 
-const decode = (data, charset) => {
+export const decode = (data, charset) => {
   let str = '';
   switch (charset) {
     case 'utf8':
@@ -15,5 +15,3 @@ const decode = (data, charset) => {
   }
   return str;
 };
-
-export default decode;

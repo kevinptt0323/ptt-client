@@ -1,4 +1,4 @@
-export default {
+export const keymap = {
   Enter: '\r',
   ArrowLeft: '\x1b[D',
   ArrowRight: '\x1b[C',

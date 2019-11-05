@@ -266,7 +266,7 @@ class Bot extends EventEmitter {
   }
 
   resetSearchCondition(): void {
-    this.searchCondition.init();
+    this.searchCondition.init(); 
   }
 
   isSearchConditionSet(): boolean {
