@@ -4,8 +4,8 @@ global.WebSocket = require('ws');
 
 const tests = [
   './connection.ts',
-  './articles.ts',
-  './favorite.ts',
+  './article.ts',
+  './board.ts',
 ];
 
 tests.forEach(test => {
