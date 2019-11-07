@@ -28,7 +28,7 @@ describe('Board', () => {
     it('should get class list', async () => {
       let boards: Board[] =
         await ptt.select(Board)
-          .where('entry', 'all')
+          .where('entry', 'class')
           .get();
       assert(boards.length > 0);
     });

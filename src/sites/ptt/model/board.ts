@@ -58,7 +58,7 @@ export class Board {
         board.admin = substrWidth('dbcs', line, 67    ).trim();
         break;
       default:
-        console.warn(`Unknow board flag. line: "${line}"`);
+        console.warn(`Unknown board flag. line: "${line}"`);
     }
     return board;
   }
@@ -84,9 +84,8 @@ export enum WhereType {
 }
 
 export enum Entry {
-  All = 'all',
-  Favorite = 'favorite',
   Class = 'class',
+  Favorite = 'favorite',
   Hot = 'hot'
 }
 
@@ -113,6 +112,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
         break;
       default:
         throw new Error(`Invalid type: ${type}`);
+        break;
     }
     return this;
   }
@@ -120,7 +120,6 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
   async get(): Promise<Board[]> {
     let found;
     switch (this.entry) {
-      case Entry.All:
       case Entry.Class:
         found = await this.bot.enterBoardByOffset(this.offsets);
         break;
