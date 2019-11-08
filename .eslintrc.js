@@ -12,6 +12,13 @@ module.exports = {
     "plugins": [
         "@typescript-eslint",
     ],
+    "extends": [
+        "airbnb-base",
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking"
+    ],
     "rules": {
         "@typescript-eslint/class-name-casing": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
