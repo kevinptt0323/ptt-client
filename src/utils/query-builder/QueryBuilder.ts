@@ -1,3 +1,1 @@
-export abstract class QueryBuilder<T> {
-  constructor(...args) { }
-}
+export abstract class QueryBuilder<T> {}

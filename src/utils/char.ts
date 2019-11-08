@@ -31,7 +31,7 @@ export function indexOfWidth(widthType: string, str: string, width?: number): nu
   if (widthType === 'length') {
     return getWidth(widthType, str);
   }
-  for (let i = 0; i <= str.length; i++) {
+  for (let i = 0; i <= str.length; i += 1) {
     if (getWidth(widthType, str.substr(0, i)) > width) {
       return i - 1;
     }
@@ -48,7 +48,12 @@ export function indexOfWidth(widthType: string, str: string, width?: number): nu
 * @params {number} startWidth - the beginning position of string
 * @params {number} width - the width of target string
 */
-export function substrWidth(widthType: string, str: string, startWidth: number, width?: number): string {
+export function substrWidth(
+  widthType: string,
+  str: string,
+  startWidth: number,
+  width?: number,
+): string {
   const ignoreWidth = typeof width === 'undefined';
   let length = width;
   let start = startWidth;

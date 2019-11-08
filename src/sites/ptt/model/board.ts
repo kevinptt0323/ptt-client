@@ -4,23 +4,14 @@ import { substrWidth } from '../../../utils/char';
 
 export class Board {
   boardname = '';
-
   id = 0;
-
   unread = false;
-
   category = '';
-
   flag = '';
-
   title = '';
-
   users = '';
-
   admin = '';
-
   folder = false;
-
   divider = false;
 
   /**
@@ -35,9 +26,6 @@ export class Board {
    */
   get read(): boolean {
     return !this.unread;
-  }
-
-  constructor() {
   }
 
   static fromLine(line: string): Board {
@@ -140,6 +128,8 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
       case Entry.Hot:
         /* TODO: More robust offsets, like -1. */
         found = await this.bot.enterBoardByOffset([12, ...this.offsets]);
+        break;
+      default:
         break;
     }
 

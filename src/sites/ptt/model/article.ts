@@ -5,21 +5,13 @@ import { substrWidth } from '../../../utils/char';
 
 export class Article {
   boardname: string;
-
   id: number;
-
   push: string;
-
   date: string;
-
   timestamp: string;
-
   author: string;
-
   status: string;
-
   title: string;
-
   fixed: boolean;
 
   private _data: string[] = [];

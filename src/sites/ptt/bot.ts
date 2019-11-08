@@ -8,11 +8,7 @@ import {
   encode,
   keymap as key,
 } from '../../utils';
-import {
-  getWidth,
-  indexOfWidth,
-  substrWidth,
-} from '../../utils/char';
+import { substrWidth } from '../../utils/char';
 import Config from '../../config';
 
 import defaultConfig from './config';
@@ -20,7 +16,6 @@ import { Article, Board } from './model';
 
 class Condition {
   private typeWord: string;
-
   private criteria: string;
 
   constructor(type: 'push'|'author'|'title', criteria: string) {
@@ -58,24 +53,19 @@ class Bot extends EventEmitter {
 
   searchCondition = {
     conditions: null,
-    init() {
+    init(): void {
       this.conditions = [];
     },
-    add(type, criteria) {
+    add(type, criteria): void {
       this.conditions.push(new Condition(type, criteria));
     },
   };
 
   private config: Config;
-
   private term: Terminal;
-
   private _state: any;
-
   private currentCharset: string;
-
   private socket: Socket;
-
   private preventIdleHandler: ReturnType<typeof setTimeout>;
 
   constructor(config?: Config) {
@@ -84,7 +74,7 @@ class Bot extends EventEmitter {
     this.init();
   }
 
-  async init(): Promise<void> {
+  init(): void {
     const { config } = this;
     this.term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
@@ -129,7 +119,7 @@ class Bot extends EventEmitter {
         this.term.write(msg);
         this.emit('redraw', this.term.toString());
       })
-      .on('error', (err) => {
+      .on('error', () => {
       });
     this.socket = socket;
   }
@@ -140,7 +130,7 @@ class Bot extends EventEmitter {
 
   getLine = (n) => this.term.state.getLine(n);
 
-  async getLines() {
+  async getLines(): Promise<any> {
     const { getLine } = this;
     const lines = [];
 
@@ -181,7 +171,7 @@ class Bot extends EventEmitter {
     }
     return new Promise((resolve, reject) => {
       let autoResolveHandler;
-      const cb = (message) => {
+      const cb = (): void => {
         clearTimeout(autoResolveHandler);
         resolve(true);
       };
