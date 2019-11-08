@@ -1,17 +1,26 @@
-import {SelectQueryBuilder} from '../../../utils/query-builder/SelectQueryBuilder';
-import {keymap as key} from '../../../utils';
-import {substrWidth} from '../../../utils/char';
+import { SelectQueryBuilder } from '../../../utils/query-builder/SelectQueryBuilder';
+import { keymap as key } from '../../../utils';
+import { substrWidth } from '../../../utils/char';
 
 export class Board {
   boardname = '';
+
   id = 0;
+
   unread = false;
+
   category = '';
+
   flag = '';
+
   title = '';
+
   users = '';
+
   admin = '';
+
   folder = false;
+
   divider = false;
 
   /**
@@ -33,29 +42,29 @@ export class Board {
 
   static fromLine(line: string): Board {
     const board = new Board();
-    board.id        = +substrWidth('dbcs', line,  3,  4).trim();
-    board.unread    = substrWidth('dbcs', line,  8,  2).trim() === 'ˇ';
+    board.id = +substrWidth('dbcs', line, 3, 4).trim();
+    board.unread = substrWidth('dbcs', line, 8, 2).trim() === 'ˇ';
     board.boardname = substrWidth('dbcs', line, 10, 12).trim();
-    board.category  = substrWidth('dbcs', line, 23,  4).trim();
-    board.flag      = substrWidth('dbcs', line, 28,  2).trim();
+    board.category = substrWidth('dbcs', line, 23, 4).trim();
+    board.flag = substrWidth('dbcs', line, 28, 2).trim();
     switch (board.flag) {
       case '□':
-        board.title  = substrWidth('dbcs', line, 30).replace(/\s+$/, '');
+        board.title = substrWidth('dbcs', line, 30).replace(/\s+$/, '');
         board.folder = true;
         break;
       case '--':
         board.divider = true;
         break;
       case 'Σ':
-        board.title  = substrWidth('dbcs', line, 30, 31).replace(/\s+$/, '');
-        board.users  = substrWidth('dbcs', line, 62,  5).trim();
-        board.admin  = substrWidth('dbcs', line, 67    ).trim();
+        board.title = substrWidth('dbcs', line, 30, 31).replace(/\s+$/, '');
+        board.users = substrWidth('dbcs', line, 62, 5).trim();
+        board.admin = substrWidth('dbcs', line, 67).trim();
         board.folder = true;
         break;
       case '◎':
         board.title = substrWidth('dbcs', line, 30, 31).replace(/\s+$/, '');
-        board.users = substrWidth('dbcs', line, 62,  5).trim();
-        board.admin = substrWidth('dbcs', line, 67    ).trim();
+        board.users = substrWidth('dbcs', line, 62, 5).trim();
+        board.admin = substrWidth('dbcs', line, 67).trim();
         break;
       default:
         console.warn(`Unknown board flag. line: "${line}"`);
@@ -65,9 +74,9 @@ export class Board {
 
   static fromClassLine(line: string): Board {
     const board = new Board();
-    board.id     = +substrWidth('dbcs', line, 15,  2);
-    board.title  = substrWidth('dbcs', line, 20, 29).replace(/\s+$/, '');
-    board.admin  = substrWidth('dbcs', line, 61).trim();
+    board.id = +substrWidth('dbcs', line, 15, 2);
+    board.title = substrWidth('dbcs', line, 20, 29).replace(/\s+$/, '');
+    board.admin = substrWidth('dbcs', line, 61).trim();
     board.folder = true;
     return board;
   }
@@ -91,7 +100,9 @@ export enum Entry {
 
 export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
   private bot;
+
   private entry: Entry = Entry.Class;
+
   private offsets: number[] = [];
 
   constructor(bot) {

@@ -1,4 +1,5 @@
-import {QueryBuilder} from './QueryBuilder';
+import { QueryBuilder } from './QueryBuilder';
+
 export abstract class SelectQueryBuilder<T> extends QueryBuilder<T> {
   constructor(...args) {
     super(...args);

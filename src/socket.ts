@@ -3,6 +3,7 @@ import Config from './config';
 
 class Socket extends EventEmitter {
   private _config: Config;
+
   private _socket: WebSocket;
 
   constructor(config) {
@@ -13,7 +14,7 @@ class Socket extends EventEmitter {
   connect(): void {
     let socket;
     if (typeof WebSocket === 'undefined') {
-      throw new Error(`'WebSocket' is undefined. Do you include any websocket polyfill?`);
+      throw new Error('\'WebSocket\' is undefined. Do you include any websocket polyfill?');
     } else if (WebSocket.length === 1) {
       socket = new WebSocket(this._config.url);
     } else {
@@ -23,7 +24,7 @@ class Socket extends EventEmitter {
       }
       socket = new WebSocket(this._config.url, options);
     }
-    socket.addEventListener('open',  this.emit.bind(this, 'connect'));
+    socket.addEventListener('open', this.emit.bind(this, 'connect'));
     socket.addEventListener('close', this.emit.bind(this, 'disconnect'));
     socket.addEventListener('error', this.emit.bind(this, 'error'));
 

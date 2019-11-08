@@ -1,2 +1,2 @@
-export {Article} from './article';
-export {Board} from './board';
+export { Article } from './article';
+export { Board } from './board';
