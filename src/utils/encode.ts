@@ -1,6 +1,6 @@
 import { encodeSync } from 'uao-js';
 
-const encode = (str, charset) => {
+const encode = (str, charset): string => {
   let buffer;
   switch (charset) {
     case 'utf8':

@@ -1,7 +1,7 @@
-import {ObjectLiteral} from '../../../common/ObjectLiteral';
-import {SelectQueryBuilder} from '../../../utils/query-builder/SelectQueryBuilder';
-import {keymap as key} from '../../../utils';
-import {substrWidth} from '../../../utils/char';
+import { ObjectLiteral } from '../../../common/ObjectLiteral';
+import { SelectQueryBuilder } from '../../../utils/query-builder/SelectQueryBuilder';
+import { keymap as key } from '../../../utils';
+import { substrWidth } from '../../../utils/char';
 
 export class Article {
   boardname: string;
@@ -13,26 +13,31 @@ export class Article {
   status: string;
   title: string;
   fixed: boolean;
+
   private _data: string[] = [];
 
   get data(): ReadonlyArray<string> {
     return this._data;
   }
+
   set data(data: ReadonlyArray<string>) {
     this._data = data.slice();
   }
+
   /**
    * @deprecated
    */
   get lines(): ReadonlyArray<string> {
     return this.data;
   }
+
   /**
    * @deprecated
    */
   set lines(data: ReadonlyArray<string>) {
     this.data = data;
   }
+
   /**
    * @deprecated
    */
@@ -45,13 +50,13 @@ export class Article {
 
   static fromLine(line: string): Article {
     const article = new Article();
-    article.id     = +substrWidth('dbcs', line, 1,   7).trim();
-    article.push   = substrWidth('dbcs', line, 9,   2).trim();
-    article.date   = substrWidth('dbcs', line, 11,  5).trim();
+    article.id = +substrWidth('dbcs', line, 1, 7).trim();
+    article.push = substrWidth('dbcs', line, 9, 2).trim();
+    article.date = substrWidth('dbcs', line, 11, 5).trim();
     article.author = substrWidth('dbcs', line, 17, 12).trim();
-    article.status = substrWidth('dbcs', line, 30,  2).trim();
-    article.title  = substrWidth('dbcs', line, 32    ).trim();
-    article.fixed  = substrWidth('dbcs', line, 1,   7).trim().includes('★');
+    article.status = substrWidth('dbcs', line, 30, 2).trim();
+    article.title = substrWidth('dbcs', line, 32).trim();
+    article.fixed = substrWidth('dbcs', line, 1, 7).trim().includes('★');
     return article;
   }
 
@@ -75,8 +80,11 @@ export enum WhereType {
 
 export class ArticleSelectQueryBuilder extends SelectQueryBuilder<Article> {
   private bot;
+
   private boardname = '';
+
   private wheres: ObjectLiteral[] = [];
+
   private id = 0;
 
   constructor(bot) {
@@ -168,9 +176,9 @@ export class ArticleSelectQueryBuilder extends SelectQueryBuilder<Article> {
     article.data = await this.bot.getLines();
 
     if (article.hasHeader()) {
-      article.author    = substrWidth('dbcs', this.bot.getLine(0).str, 7, 50).trim();
-      article.title     = substrWidth('dbcs', this.bot.getLine(1).str, 7    ).trim();
-      article.timestamp = substrWidth('dbcs', this.bot.getLine(2).str, 7    ).trim();
+      article.author = substrWidth('dbcs', this.bot.getLine(0).str, 7, 50).trim();
+      article.title = substrWidth('dbcs', this.bot.getLine(1).str, 7).trim();
+      article.timestamp = substrWidth('dbcs', this.bot.getLine(2).str, 7).trim();
     }
 
     await this.bot.enterIndex();

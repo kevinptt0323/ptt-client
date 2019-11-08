@@ -8,15 +8,11 @@ import {
   encode,
   keymap as key,
 } from '../../utils';
-import {
-  getWidth,
-  indexOfWidth,
-  substrWidth,
-} from '../../utils/char';
+import { substrWidth } from '../../utils/char';
 import Config from '../../config';
 
 import defaultConfig from './config';
-import {Article, Board} from './model';
+import { Article, Board } from './model';
 
 class Condition {
   private typeWord: string;
@@ -49,6 +45,7 @@ class Bot extends EventEmitter {
     connect: false,
     login: false,
   };
+
   static forwardEvents = [
     'message',
     'error',
@@ -56,12 +53,12 @@ class Bot extends EventEmitter {
 
   searchCondition = {
     conditions: null,
-    init: function() {
+    init(): void {
       this.conditions = [];
     },
-    add: function(type, criteria) {
+    add(type, criteria): void {
       this.conditions.push(new Condition(type, criteria));
-    }
+    },
   };
 
   private config: Config;
@@ -73,11 +70,11 @@ class Bot extends EventEmitter {
 
   constructor(config?: Config) {
     super();
-    this.config = {...defaultConfig, ...config};
+    this.config = { ...defaultConfig, ...config };
     this.init();
   }
 
-  async init(): Promise<void> {
+  init(): void {
     const { config } = this;
     this.term = new Terminal(config.terminal);
     this._state = { ...Bot.initialState };
@@ -99,7 +96,7 @@ class Bot extends EventEmitter {
     const socket = new Socket(config);
     socket.connect();
 
-    Bot.forwardEvents.forEach(e => {
+    Bot.forwardEvents.forEach((e) => {
       socket.on(e, this.emit.bind(this, e));
     });
     socket
@@ -114,28 +111,26 @@ class Bot extends EventEmitter {
         this.emit('stateChange', this.state);
       })
       .on('message', (data) => {
-        if (this.currentCharset !== this.config.charset && !this.state.login &&
-            decode(data, 'utf8').includes('登入中，請稍候...')) {
+        if (this.currentCharset !== this.config.charset && !this.state.login
+            && decode(data, 'utf8').includes('登入中，請稍候...')) {
           this.currentCharset = this.config.charset;
         }
         const msg = decode(data, this.currentCharset);
         this.term.write(msg);
         this.emit('redraw', this.term.toString());
       })
-      .on('error', (err) => {
+      .on('error', () => {
       });
     this.socket = socket;
   }
 
   get state(): any {
-    return {...this._state};
+    return { ...this._state };
   }
 
-  getLine = (n) => {
-    return this.term.state.getLine(n);
-  }
+  getLine = (n) => this.term.state.getLine(n);
 
-  async getLines() {
+  async getLines(): Promise<any> {
     const { getLine } = this;
     const lines = [];
 
@@ -172,11 +167,11 @@ class Bot extends EventEmitter {
 
   send(msg: string): Promise<boolean> {
     if (this.config.preventIdleTimeout) {
-        this.preventIdle(this.config.preventIdleTimeout);
+      this.preventIdle(this.config.preventIdleTimeout);
     }
     return new Promise((resolve, reject) => {
       let autoResolveHandler;
-      const cb = message => {
+      const cb = (): void => {
         clearTimeout(autoResolveHandler);
         resolve(true);
       };
@@ -189,7 +184,7 @@ class Bot extends EventEmitter {
             resolve(false);
           }, this.config.timeout * 10);
         } else {
-          console.warn(`Sending message with 0-length`);
+          console.warn('Sending message with 0-length');
           resolve(true);
         }
       } else {
@@ -208,7 +203,7 @@ class Bot extends EventEmitter {
     }
   }
 
-  async login(username: string, password: string, kick: boolean= true): Promise<any> {
+  async login(username: string, password: string, kick = true): Promise<any> {
     if (this.state.login) { return; }
     username = username.replace(/,/g, '');
     if (this.config.charset === 'utf8') {
@@ -246,10 +241,10 @@ class Bot extends EventEmitter {
     if (getLine(21).str.includes('密碼不對或無此帳號')) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(23).str.includes('請稍後再試')) {
+    } if (getLine(23).str.includes('請稍後再試')) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(22).str.includes('您想刪除其他重複登入的連線嗎')) {
+    } if (getLine(22).str.includes('您想刪除其他重複登入的連線嗎')) {
       await this.send(`${key.Backspace}${kick ? 'y' : 'n'}${key.Enter}`);
     } else if (getLine(23).str.includes('請勿頻繁登入以免造成系統過度負荷')) {
       await this.send(`${key.Enter}`);
@@ -263,7 +258,7 @@ class Bot extends EventEmitter {
       this.emit('login.success');
       return true;
     } else {
-      await this.send(`q`);
+      await this.send('q');
     }
     return null;
   }
@@ -301,10 +296,10 @@ class Bot extends EventEmitter {
   /**
    * @deprecated
    */
-  async getArticles(boardname: string, offset: number= 0): Promise<Article[]> {
+  async getArticles(boardname: string, offset = 0): Promise<Article[]> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()) {
-      const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
+      const searchString = this.searchCondition.conditions.map((condition) => condition.toSearchString()).join(key.Enter);
       await this.send(`${searchString}${key.Enter}`);
     }
 
@@ -342,7 +337,7 @@ class Bot extends EventEmitter {
   async getArticle(boardname: string, id: number, article: Article = new Article()): Promise<Article> {
     await this.enterBoard(boardname);
     if (this.isSearchConditionSet()) {
-      const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
+      const searchString = this.searchCondition.conditions.map((condition) => condition.toSearchString()).join(key.Enter);
       await this.send(`${searchString}${key.Enter}`);
     }
     const { getLine } = this;
@@ -355,9 +350,9 @@ class Bot extends EventEmitter {
     article.boardname = boardname;
 
     if (hasHeader) {
-      article.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
-      article.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
-      article.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
+      article.author = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
+      article.title = substrWidth('dbcs', getLine(1).str, 7).trim();
+      article.timestamp = substrWidth('dbcs', getLine(2).str, 7).trim();
     }
 
     article.lines = await this.getLines();
@@ -369,7 +364,7 @@ class Bot extends EventEmitter {
   /**
    * @deprecated
    */
-  async getFavorite(offsets: number|number[]= []) {
+  async getFavorite(offsets: number|number[] = []) {
     if (typeof offsets === 'number') {
       offsets = [offsets];
     }
@@ -403,7 +398,7 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
-  async getMails(offset: number= 0) {
+  async getMails(offset = 0) {
     await this.enterMail();
     if (offset > 0) {
       offset = Math.max(offset - 9, 1);
@@ -416,11 +411,11 @@ class Bot extends EventEmitter {
     for (let i = 3; i <= 22; i++) {
       const line = getLine(i).str;
       const mail = {
-        sn:    +substrWidth('dbcs', line, 1,   5).trim(),
-        date:   substrWidth('dbcs', line, 9,   5).trim(),
+        sn: +substrWidth('dbcs', line, 1, 5).trim(),
+        date: substrWidth('dbcs', line, 9, 5).trim(),
         author: substrWidth('dbcs', line, 15, 12).trim(),
-        status: substrWidth('dbcs', line, 30,  2).trim(),
-        title:  substrWidth('dbcs', line, 33    ).trim(),
+        status: substrWidth('dbcs', line, 30, 2).trim(),
+        title: substrWidth('dbcs', line, 33).trim(),
       };
       mails.push(mail);
     }
@@ -446,9 +441,9 @@ class Bot extends EventEmitter {
     };
 
     if (this.checkArticleWithHeader()) {
-      mail.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
-      mail.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
-      mail.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
+      mail.author = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
+      mail.title = substrWidth('dbcs', getLine(1).str, 7).trim();
+      mail.timestamp = substrWidth('dbcs', getLine(2).str, 7).trim();
     }
 
     mail.lines = await this.getLines();
@@ -467,9 +462,8 @@ class Bot extends EventEmitter {
     const match = boardRe.exec(this.getLine(0).str);
     if (match) {
       return match.groups.boardname;
-    } else {
-      return void 0;
     }
+    return void 0;
   }
 
   /**
@@ -486,16 +480,15 @@ class Bot extends EventEmitter {
       this._state.position.boardname = this.currentBoardname;
       this.emit('stateChange', this.state);
       return true;
-    } else {
-      await this.enterIndex();
-      return false;
     }
+    await this.enterIndex();
+    return false;
   }
 
-  async enterByOffset(offsets: number[]= []): Promise<boolean> {
+  async enterByOffset(offsets: number[] = []): Promise<boolean> {
     const { getLine } = this;
     let result = true;
-    offsets.forEach(async offset => {
+    offsets.forEach(async (offset) => {
       if (offset === 0) {
         result = false;
       }
@@ -522,18 +515,17 @@ class Bot extends EventEmitter {
       this.emit('stateChange', this.state);
       await this.send(key.Home);
       return true;
-    } else {
-      await this.enterIndex();
-      return false;
     }
+    await this.enterIndex();
+    return false;
   }
 
-  async enterBoardByOffset(offsets: number[]= []): Promise<boolean> {
+  async enterBoardByOffset(offsets: number[] = []): Promise<boolean> {
     await this.send(`C${key.Enter}`);
     return await this.enterByOffset(offsets);
   }
 
-  async enterFavorite(offsets: number[]= []): Promise<boolean> {
+  async enterFavorite(offsets: number[] = []): Promise<boolean> {
     await this.send(`F${key.Enter}`);
     return await this.enterByOffset(offsets);
   }
