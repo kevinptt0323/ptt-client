@@ -3,7 +3,7 @@ import {keymap as key} from '../../../utils';
 import {substrWidth} from '../../../utils/char';
 
 export class Board {
-  boardname = '';
+  name = '';
   id = 0;
   unread = false;
   category = '';
@@ -24,6 +24,13 @@ export class Board {
   /**
    * @deprecated
    */
+  get boardname(): string {
+    return this.name;
+  }
+
+  /**
+   * @deprecated
+   */
   get read(): boolean {
     return !this.unread;
   }
@@ -35,7 +42,7 @@ export class Board {
     const board = new Board();
     board.id        = +substrWidth('dbcs', line,  3,  4).trim();
     board.unread    = substrWidth('dbcs', line,  8,  2).trim() === 'ˇ';
-    board.boardname = substrWidth('dbcs', line, 10, 12).trim();
+    board.name      = substrWidth('dbcs', line, 10, 12).trim();
     board.category  = substrWidth('dbcs', line, 23,  4).trim();
     board.flag      = substrWidth('dbcs', line, 28,  2).trim();
     switch (board.flag) {
