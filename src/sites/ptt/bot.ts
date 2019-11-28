@@ -288,7 +288,7 @@ class Bot extends EventEmitter {
    * @deprecated
    */
   resetSearchCondition(): void {
-    this.searchCondition.init();
+    this.searchCondition.init(); 
   }
 
   /**

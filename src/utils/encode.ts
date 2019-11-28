@@ -1,6 +1,6 @@
 import { encodeSync } from 'uao-js';
 
-const encode = (str, charset) => {
+export const encode = (str, charset) => {
   let buffer;
   switch (charset) {
     case 'utf8':
@@ -15,5 +15,3 @@ const encode = (str, charset) => {
   }
   return buffer;
 };
-
-export default encode;
