@@ -47,7 +47,7 @@ describe('Article', () => {
 
       const article1Info = getArticleInfo(articles[articles.length-1]);
       const article2Info = getArticleInfo(articles2[0]);
-      assert.equal(articles2[0].id, articles[articles.length-1].id-1, `${article1Info}\n${article2Info}`);
+      assert.strictEqual(articles2[0].id, articles[articles.length-1].id-1, `${article1Info}\n${article2Info}`);
     });
   });
 

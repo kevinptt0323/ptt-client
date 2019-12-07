@@ -35,7 +35,8 @@ export class Board {
     return !this.unread;
   }
 
-  constructor() {
+  constructor(name: string = '') {
+    this.name = name;
   }
 
   static fromLine(line: string): Board {
@@ -86,6 +87,7 @@ export class Board {
 
 export enum WhereType {
   Entry = 'entry',
+  Prefix = 'prefix',
   Offset = 'offset',
   Offsets = 'offsets',
 }
@@ -99,6 +101,7 @@ export enum Entry {
 export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
   private bot;
   private entry: Entry = Entry.Class;
+  private prefix: string = '';
   private offsets: number[] = [];
 
   constructor(bot) {
@@ -110,6 +113,9 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
     switch (type.toLowerCase()) {
       case WhereType.Entry:
         this.entry = condition.toLowerCase();
+        break;
+      case WhereType.Prefix:
+        this.prefix = condition;
         break;
       case WhereType.Offset:
         this.offsets.push(condition);
@@ -125,6 +131,9 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
   }
 
   async get(): Promise<Board[]> {
+    if (this.prefix !== '') {
+      return await this.getByPrefix(this.prefix);
+    }
     let found;
     switch (this.entry) {
       case Entry.Class:
@@ -180,6 +189,54 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
   async getOne(): Promise<Board|undefined> {
     const res = await this.get();
     return res.length ? res[0] : void 0;
+  }
+
+  private async getByPrefix(prefix: string): Promise<Board[]> {
+    await this.bot.send(`s${prefix} `);
+    const boards: Board[] = [];
+    const resultLine0 = this.bot.getLine(3).str;
+    if (resultLine0.toLowerCase().indexOf(prefix.toLowerCase()) === 0) {
+      let col = 0, row = 0;
+      /* TODO: Use other way instead of the constant 15. */
+      let width = 15;
+      while (width < resultLine0.length && resultLine0[width] !== ' ') {
+          width += 1;
+      }
+      while (width < resultLine0.length && resultLine0[width] === ' ') {
+          width += 1;
+      }
+      while (true) {
+        const line = this.bot.getLine(row + 3).str;
+        const boardname = substrWidth('dbcs', line, col * width, width).trim();
+        if (boardname !== '') {
+          boards.push(new Board(boardname));
+        } else {
+          break;
+        }
+        row += 1;
+        if (row == 20) {
+          col += 1;
+          row = 0;
+          /* TODO: Use other way instead of the constant 80. */
+          if ((col + 1) * width > 80) {
+            if (this.bot.getLine(23).str.includes('按任意鍵繼續')) {
+              col = row = 0;
+              await this.bot.send(' ');
+            } else {
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      const searchLine = this.bot.getLine(1).str;
+      const searchInput = substrWidth('dbcs', searchLine, 34, 15).trim();
+      if (searchInput.toLowerCase().indexOf(prefix.toLowerCase()) === 0) {
+        boards.push(new Board(searchInput));
+      }
+    }
+    await this.bot.send(key.CtrlC);
+    return boards;
   }
 }
 
