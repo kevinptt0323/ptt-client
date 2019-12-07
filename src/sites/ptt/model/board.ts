@@ -134,8 +134,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
         found = await this.bot.enterFavorite(this.offsets);
         break;
       case Entry.Hot:
-        /* TODO: More robust offsets, like -1. */
-        found = await this.bot.enterBoardByOffset([12, ...this.offsets]);
+        found = await this.bot.enterBoardByOffset([-1, ...this.offsets]);
         break;
     }
 

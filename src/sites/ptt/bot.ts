@@ -501,7 +501,12 @@ class Bot extends EventEmitter {
       }
       if (offset < 0) {
         for (let i = 22; i >= 3; i--) {
-          const lastOffset = substrWidth('dbcs', getLine(i).str, 3, 4).trim();
+          let lastOffset = substrWidth('dbcs', getLine(i).str, 3, 4).trim();
+          if (lastOffset.length > 0) {
+            offset += +lastOffset + 1;
+            break;
+          }
+          lastOffset = substrWidth('dbcs', getLine(i).str, 15, 2).trim();
           if (lastOffset.length > 0) {
             offset += +lastOffset + 1;
             break;
