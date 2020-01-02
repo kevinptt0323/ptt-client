@@ -60,6 +60,9 @@ export class Article {
   }
 
   hasHeader(): boolean {
+    if (this.data.length === 0) {
+      return false;
+    }
     const authorArea = substrWidth('dbcs', this.data[0], 0, 6).trim();
     return authorArea === '作者';
   }

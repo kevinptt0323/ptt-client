@@ -142,7 +142,8 @@ class Bot extends EventEmitter {
     lines.push(getLine(0).str);
 
     let sentPgDown = false;
-    while (!getLine(23).str.includes('100%')) {
+    while (!getLine(23).str.includes('100%')
+        && !getLine(23).str.includes('此文章無內容')) {
       for (let i = 1; i < 23; i++) {
         lines.push(getLine(i).str);
       }
