@@ -62,6 +62,10 @@ global.WebSocket = require('ws');
     // get your favorite list
     query = ptt.select(Board).where('entry', 'favorite');
     let favorites = await query.get();
+
+    // search board by prefix
+    query = ptt.select(Board).where('prefix', 'c_cha');
+    let boards = await query.get();
   
     // get favorite list in a folder
     if (favorites[0].folder) {
