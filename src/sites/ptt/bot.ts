@@ -71,6 +71,15 @@ class Bot extends EventEmitter {
   private socket: Socket;
   private preventIdleHandler: ReturnType<typeof setTimeout>;
 
+  get screen(): string {
+    const lines = [];
+
+    for(let i = 0; i <= 23; i++) {
+      lines.push(this.getLine(i).str);
+    }
+    return lines.join('\n');
+  }
+
   constructor(config?: Config) {
     super();
     this.config = {...defaultConfig, ...config};
@@ -190,7 +199,7 @@ class Bot extends EventEmitter {
             resolve(false);
           }, this.config.timeout * 10);
         } else {
-          console.warn(`Sending message with 0-length`);
+          console.info(`Sending message with 0-length. Skipped.`);
           resolve(true);
         }
       } else {
@@ -216,10 +225,7 @@ class Bot extends EventEmitter {
       username += ',';
     }
     await this.send(`${username}${key.Enter}${password}${key.Enter}`);
-    let ret;
-    while ((ret = await this.checkLogin(kick)) === null) {
-      await sleep(400);
-    }
+    let ret = await this.checkLogin(kick);
     if (ret) {
       const { _state: state } = this;
       state.login = true;
@@ -241,7 +247,7 @@ class Bot extends EventEmitter {
     return true;
   }
 
-  private async checkLogin(kick: boolean): Promise<any> {
+  private async checkLogin(kick: boolean): Promise<boolean> {
     const { getLine } = this;
 
     if (getLine(21).str.includes('密碼不對或無此帳號')) {
@@ -250,23 +256,39 @@ class Bot extends EventEmitter {
     } else if (getLine(23).str.includes('請稍後再試')) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(22).str.includes('您想刪除其他重複登入的連線嗎')) {
-      await this.send(`${key.Backspace}${kick ? 'y' : 'n'}${key.Enter}`);
-    } else if (getLine(23).str.includes('請勿頻繁登入以免造成系統過度負荷')) {
-      await this.send(`${key.Enter}`);
-    } else if (getLine(23).str.includes('按任意鍵繼續')) {
-      await this.send(`${key.Enter}`);
-    } else if (getLine(23).str.includes('您要刪除以上錯誤嘗試的記錄嗎')) {
-      await this.send(`${key.Backspace}y${key.Enter}`);
-    } else if ((getLine(22).str + getLine(23).str).toLowerCase().includes('y/n')) {
-      await this.send(`${key.Backspace}y${key.Enter}`);
-    } else if (getLine(23).str.includes('我是')) {
+    } else {
+      let state = 0;
+      while (true) {
+        await sleep(400);
+        if (getLine(22).str.includes('登入中，請稍候...')) {
+          /* no-op */
+        } else if (getLine(22).str.includes('您想刪除其他重複登入的連線嗎')) {
+          if (state === 1) continue;
+          await this.send(`${kick ? 'y' : 'n'}${key.Enter}`);
+          state = 1;
+          continue;
+        } else if (getLine(23).str.includes('請勿頻繁登入以免造成系統過度負荷')) {
+          if (state === 2) continue;
+          await this.send(`${key.Enter}`);
+          state = 2;
+        } else if (getLine(23).str.includes('您要刪除以上錯誤嘗試的記錄嗎')) {
+          if (state === 3) continue;
+          await this.send(`y${key.Enter}`);
+          state = 3;
+        } else if (getLine(23).str.includes('按任意鍵繼續')) {
+          await this.send(`${key.Enter}`);
+        } else if ((getLine(22).str + getLine(23).str).toLowerCase().includes('y/n')) {
+          console.info(`Unknown login state: \n${this.screen}`);
+          await this.send(`y${key.Enter}`);
+        } else if (getLine(23).str.includes('我是')) {
+          break;
+        } else {
+          console.info(`Unknown login state: \n${this.screen}`);
+        }
+      }
       this.emit('login.success');
       return true;
-    } else {
-      await this.send(`q`);
     }
-    return null;
   }
 
   private checkArticleWithHeader(): boolean {
