@@ -1,26 +1,15 @@
 import assert from 'assert';
-import pttbot from '../src';
-import { username, password } from './config';
 import { Board } from '../src/sites/ptt/model';
 
-const newbot = async () => {
-  const ptt = new pttbot();
-  await (() => new Promise(resolve => {
-    ptt.once('connect', resolve);
-  }))();
-  const ret = await ptt.login(username, password)
-  if (!ret) {
-    throw 'login failed';
-  }
-  return ptt;
-};
+import { newbot } from './common';
+import { username, password } from './config';
 
 describe('Board', () => {
   let ptt;
 
   describe('get', () => {
     before('login', async () => {
-      ptt = await newbot();
+      ptt = await newbot(username, password);
     });
     after('logout', async () => {
       await ptt.logout();
