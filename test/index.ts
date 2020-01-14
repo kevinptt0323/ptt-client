@@ -6,6 +6,7 @@ const tests = [
   './connection.ts',
   './article.ts',
   './board.ts',
+  './mail.ts',
 ];
 
 tests.forEach(test => {
