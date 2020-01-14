@@ -15,7 +15,7 @@ npm install ptt-client
 ## Example
 ```js
 import Ptt from 'ptt-client';
-import {Article, Board} from 'ptt-client/sites/ptt/model';
+import {Article, Board, Mail} from 'ptt-client/sites/ptt/model';
 
 // if you are using this module in node.js, 'ws' is required as WebSocket polyfill.
 // you don't need this in modern browsers
@@ -73,9 +73,13 @@ global.WebSocket = require('ws');
       let favorites2 = await query.get();
     }
 
-    let mails = await ptt.getMails();
+    // get mails
+    query = ptt.select(Mail);
+    let mails = await query.get();
 
-    let mail = await ptt.getMail(mails[0].sn);
+    // get mail
+    query.where('id', mails[0].sn);
+    let mail = await query.getOne();
 
     await ptt.logout();
 
