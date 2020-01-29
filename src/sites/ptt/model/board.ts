@@ -14,27 +14,6 @@ export class Board {
   folder = false;
   divider = false;
 
-  /**
-   * @deprecated
-   */
-  get bn(): number {
-    return this.id;
-  }
-
-  /**
-   * @deprecated
-   */
-  get boardname(): string {
-    return this.name;
-  }
-
-  /**
-   * @deprecated
-   */
-  get read(): boolean {
-    return !this.unread;
-  }
-
   constructor(name: string = '') {
     this.name = name;
   }

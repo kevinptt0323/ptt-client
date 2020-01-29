@@ -21,24 +21,6 @@ export class Article {
   set data(data: ReadonlyArray<string>) {
     this._data = data.slice();
   }
-  /**
-   * @deprecated
-   */
-  get lines(): ReadonlyArray<string> {
-    return this.data;
-  }
-  /**
-   * @deprecated
-   */
-  set lines(data: ReadonlyArray<string>) {
-    this.data = data;
-  }
-  /**
-   * @deprecated
-   */
-  get sn(): number {
-    return this.id;
-  }
 
   constructor() {
   }

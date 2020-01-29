@@ -19,32 +19,6 @@ import {
 import defaultConfig from './config';
 import {Article, Board} from './model';
 
-class Condition {
-  private typeWord: string;
-  private criteria: string;
-
-  constructor(type: 'push'|'author'|'title', criteria: string) {
-    switch (type) {
-      case 'push':
-        this.typeWord = 'Z';
-        break;
-      case 'author':
-        this.typeWord = 'a';
-        break;
-      case 'title':
-        this.typeWord = '/';
-        break;
-      default:
-        throw new Error(`Invalid condition: ${type}`);
-    }
-    this.criteria = criteria;
-  }
-
-  toSearchString(): string {
-    return `${this.typeWord}${this.criteria}`;
-  }
-}
-
 class Bot extends EventEmitter {
   static initialState = {
     connect: false,
@@ -54,16 +28,6 @@ class Bot extends EventEmitter {
     'message',
     'error',
   ];
-
-  searchCondition = {
-    conditions: null,
-    init: function() {
-      this.conditions = [];
-    },
-    add: function(type, criteria) {
-      this.conditions.push(new Condition(type, criteria));
-    }
-  };
 
   private config: Config;
   private term: Terminal;
@@ -236,7 +200,6 @@ class Bot extends EventEmitter {
       state.position = {
         boardname: '',
       };
-      this.searchCondition.init();
       this.emit('stateChange', this.state);
     }
     return ret;
@@ -305,132 +268,6 @@ class Bot extends EventEmitter {
 
   select(model) {
     return model.select(this);
-  }
-
-  /**
-   * @deprecated
-   */
-  setSearchCondition(type: string, criteria: string): void {
-    this.searchCondition.add(type, criteria);
-  }
-
-  /**
-   * @deprecated
-   */
-  resetSearchCondition(): void {
-    this.searchCondition.init();
-  }
-
-  /**
-   * @deprecated
-   */
-  isSearchConditionSet(): boolean {
-    return (this.searchCondition.conditions.length !== 0);
-  }
-
-  /**
-   * @deprecated
-   */
-  async getArticles(boardname: string, offset: number= 0): Promise<Article[]> {
-    await this.enterBoard(boardname);
-    if (this.isSearchConditionSet()) {
-      const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
-      await this.send(`${searchString}${key.Enter}`);
-    }
-
-    if (offset > 0) {
-      offset = Math.max(offset - 9, 1);
-      await this.send(`${key.End}${key.End}${offset}${key.Enter}`);
-    }
-    const { getLine } = this;
-    const articles: Article[] = [];
-    for (let i = 3; i <= 22; i++) {
-      const line = getLine(i).str;
-      const article = Article.fromLine(line);
-      article.boardname = boardname;
-      articles.push(article);
-    }
-    // fix id
-    if (articles.length >= 2 && articles[0].id === 0) {
-      for (let i = 1; i < articles.length; i++) {
-        if (articles[i].id !== 0) {
-          articles[0].id = articles[i].id - i;
-          break;
-        }
-      }
-    }
-    for (let i = 1; i < articles.length; i++) {
-      articles[i].id = articles[i - 1].id + 1;
-    }
-    await this.enterIndex();
-    return articles.reverse();
-  }
-
-  /**
-   * @deprecated
-   */
-  async getArticle(boardname: string, id: number, article: Article = new Article()): Promise<Article> {
-    await this.enterBoard(boardname);
-    if (this.isSearchConditionSet()) {
-      const searchString = this.searchCondition.conditions.map(condition => condition.toSearchString()).join(key.Enter);
-      await this.send(`${searchString}${key.Enter}`);
-    }
-    const { getLine } = this;
-
-    await this.send(`${id}${key.Enter}${key.Enter}`);
-
-    const hasHeader = this.checkArticleWithHeader();
-
-    article.id = id;
-    article.boardname = boardname;
-
-    if (hasHeader) {
-      article.author    = substrWidth('dbcs', getLine(0).str, 7, 50).trim();
-      article.title     = substrWidth('dbcs', getLine(1).str, 7    ).trim();
-      article.timestamp = substrWidth('dbcs', getLine(2).str, 7    ).trim();
-    }
-
-    article.lines = await this.getLines();
-
-    await this.enterIndex();
-    return article;
-  }
-
-  /**
-   * @deprecated
-   */
-  async getFavorite(offsets: number|number[]= []) {
-    if (typeof offsets === 'number') {
-      offsets = [offsets];
-    }
-    await this.enterFavorite(offsets);
-    const { getLine } = this;
-
-    const favorites: Board[] = [];
-
-    while (true) {
-      let stopLoop = false;
-      for (let i = 3; i < 23; i++) {
-        const line = getLine(i).str;
-        if (line.trim() === '') {
-          stopLoop = true;
-          break;
-        }
-        const favorite = Board.fromLine(line);
-        if (favorite.id !== favorites.length + 1) {
-          stopLoop = true;
-          break;
-        }
-        favorites.push(favorite);
-      }
-      if (stopLoop) {
-        break;
-      }
-      await this.send(key.PgDown);
-    }
-
-    await this.enterIndex();
-    return favorites;
   }
 
   /**
@@ -506,13 +343,6 @@ class Bot extends EventEmitter {
     } else {
       return void 0;
     }
-  }
-
-  /**
-   * @deprecated
-   */
-  enterBoard(boardname: string): Promise<boolean> {
-    return this.enterBoardByName(boardname);
   }
 
   async enterBoardByName(boardname: string): Promise<boolean> {
