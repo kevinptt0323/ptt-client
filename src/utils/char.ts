@@ -29,9 +29,9 @@ export function getWidth(widthType: string, str: string): number {
 * @params {string} str - string to calculate
 * @params {number} width - the width of target string
 */
-export function indexOfWidth(widthType: string, str: string, width?: number): number {
+export function indexOfWidth(widthType: string, str: string, width: number): number {
     if (widthType === 'length') {
-        return getWidth(widthType, str);
+        return Math.min(width, str.length);
     }
     for (let i = 0; i <= str.length; i++) {
         if (getWidth(widthType, str.substr(0, i)) > width) {
