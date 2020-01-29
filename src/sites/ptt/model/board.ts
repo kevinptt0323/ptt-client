@@ -151,7 +151,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
     if (found) {
       if (this.entry === Entry.Class && this.offsets.length === 0) {
         for (let i = 7; i < 23; i++) {
-          const line = this.bot.getLine(i).str;
+          const line = this.bot.line[i].str;
           if (line.trim() === '') {
             break;
           }
@@ -162,7 +162,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
         while (true) {
           let stopLoop = false;
           for (let i = 3; i < 23; i++) {
-            const line = this.bot.getLine(i).str;
+            const line = this.bot.line[i].str;
             if (line.trim() === '') {
               stopLoop = true;
               break;
@@ -194,7 +194,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
   private async getByPrefix(prefix: string): Promise<Board[]> {
     await this.bot.send(`s${prefix} `);
     const boards: Board[] = [];
-    const resultLine0 = this.bot.getLine(3).str;
+    const resultLine0 = this.bot.line[3].str;
     if (resultLine0.toLowerCase().indexOf(prefix.toLowerCase()) === 0) {
       let col = 0, row = 0;
       /* TODO: Use other way instead of the constant 15. */
@@ -206,7 +206,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
           width += 1;
       }
       while (true) {
-        const line = this.bot.getLine(row + 3).str;
+        const line = this.bot.line[row + 3].str;
         const boardname = substrWidth('dbcs', line, col * width, width).trim();
         if (boardname !== '') {
           boards.push(new Board(boardname));
@@ -219,7 +219,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
           row = 0;
           /* TODO: Use other way instead of the constant 80. */
           if ((col + 1) * width > 80) {
-            if (this.bot.getLine(23).str.includes('按任意鍵繼續')) {
+            if (this.bot.line[23].str.includes('按任意鍵繼續')) {
               col = row = 0;
               await this.bot.send(' ');
             } else {
@@ -229,7 +229,7 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
         }
       }
     } else {
-      const searchLine = this.bot.getLine(1).str;
+      const searchLine = this.bot.line[1].str;
       const searchInput = substrWidth('dbcs', searchLine, 34, 15).trim();
       if (searchInput.toLowerCase().indexOf(prefix.toLowerCase()) === 0) {
         boards.push(new Board(searchInput));

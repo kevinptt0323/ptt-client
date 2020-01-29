@@ -131,7 +131,7 @@ export class ArticleSelectQueryBuilder extends SelectQueryBuilder<Article> {
 
     const articles: Article[] = [];
     for (let i = 3; i <= 22; i++) {
-      const line = this.bot.getLine(i).str;
+      const line = this.bot.line[i].str;
       if (line.trim() === '') {
         break;
       }
@@ -171,9 +171,9 @@ export class ArticleSelectQueryBuilder extends SelectQueryBuilder<Article> {
     article.data = await this.bot.getLines();
 
     if (article.hasHeader()) {
-      article.author    = substrWidth('dbcs', this.bot.getLine(0).str, 7, 50).trim();
-      article.title     = substrWidth('dbcs', this.bot.getLine(1).str, 7    ).trim();
-      article.timestamp = substrWidth('dbcs', this.bot.getLine(2).str, 7    ).trim();
+      article.author    = substrWidth('dbcs', this.bot.line[0].str, 7, 50).trim();
+      article.title     = substrWidth('dbcs', this.bot.line[1].str, 7    ).trim();
+      article.timestamp = substrWidth('dbcs', this.bot.line[2].str, 7    ).trim();
     }
 
     await this.bot.enterIndex();

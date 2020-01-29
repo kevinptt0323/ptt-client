@@ -2,6 +2,8 @@ import EventEmitter from 'eventemitter3';
 import sleep from 'sleep-promise';
 import Terminal from 'terminal.js';
 
+import {Line} from '../../common/Line';
+import Config from '../../config';
 import Socket from '../../socket';
 import {
   decode,
@@ -13,7 +15,6 @@ import {
   indexOfWidth,
   substrWidth,
 } from '../../utils/char';
-import Config from '../../config';
 
 import defaultConfig from './config';
 import {Article, Board} from './model';
@@ -71,13 +72,17 @@ class Bot extends EventEmitter {
   private socket: Socket;
   private preventIdleHandler: ReturnType<typeof setTimeout>;
 
-  get screen(): string {
+  get line(): Line[] {
     const lines = [];
-
-    for(let i = 0; i <= 23; i++) {
-      lines.push(this.getLine(i).str);
+    for(let i = 0; i < this.term.state.rows; i++) {
+      const { str, attr } = this.term.state.getLine(i);
+      lines.push({ str, attr: Object.assign({}, attr) });
     }
-    return lines.join('\n');
+    return lines;
+  }
+
+  get screen(): string {
+    return this.line.map(line => line.str).join('\n');
   }
 
   constructor(config?: Config) {
@@ -145,16 +150,15 @@ class Bot extends EventEmitter {
   }
 
   async getLines() {
-    const { getLine } = this;
     const lines = [];
 
-    lines.push(getLine(0).str);
+    lines.push(this.line[0].str);
 
     let sentPgDown = false;
-    while (!getLine(23).str.includes('100%')
-        && !getLine(23).str.includes('此文章無內容')) {
+    while (!this.line[23].str.includes('100%')
+        && !this.line[23].str.includes('此文章無內容')) {
       for (let i = 1; i < 23; i++) {
-        lines.push(getLine(i).str);
+        lines.push(this.line[i].str);
       }
       await this.send(key.PgDown);
       sentPgDown = true;
@@ -162,9 +166,9 @@ class Bot extends EventEmitter {
 
     const lastLine = lines[lines.length - 1];
     for (let i = 0; i < 23; i++) {
-      if (getLine(i).str === lastLine) {
+      if (this.line[i].str === lastLine) {
         for (let j = i + 1; j < 23; j++) {
-          lines.push(getLine(j).str);
+          lines.push(this.line[j].str);
         }
         break;
       }
@@ -248,39 +252,39 @@ class Bot extends EventEmitter {
   }
 
   private async checkLogin(kick: boolean): Promise<boolean> {
-    const { getLine } = this;
 
-    if (getLine(21).str.includes('密碼不對或無此帳號')) {
+    if (this.line[21].str.includes('密碼不對或無此帳號')) {
       this.emit('login.failed');
       return false;
-    } else if (getLine(23).str.includes('請稍後再試')) {
+    } else if (this.line[23].str.includes('請稍後再試')) {
       this.emit('login.failed');
       return false;
     } else {
       let state = 0;
       while (true) {
         await sleep(400);
-        if (getLine(22).str.includes('登入中，請稍候...')) {
+        const lines = this.line;
+        if (lines[22].str.includes('登入中，請稍候...')) {
           /* no-op */
-        } else if (getLine(22).str.includes('您想刪除其他重複登入的連線嗎')) {
+        } else if (lines[22].str.includes('您想刪除其他重複登入的連線嗎')) {
           if (state === 1) continue;
           await this.send(`${kick ? 'y' : 'n'}${key.Enter}`);
           state = 1;
           continue;
-        } else if (getLine(23).str.includes('請勿頻繁登入以免造成系統過度負荷')) {
+        } else if (lines[23].str.includes('請勿頻繁登入以免造成系統過度負荷')) {
           if (state === 2) continue;
           await this.send(`${key.Enter}`);
           state = 2;
-        } else if (getLine(23).str.includes('您要刪除以上錯誤嘗試的記錄嗎')) {
+        } else if (lines[23].str.includes('您要刪除以上錯誤嘗試的記錄嗎')) {
           if (state === 3) continue;
           await this.send(`y${key.Enter}`);
           state = 3;
-        } else if (getLine(23).str.includes('按任意鍵繼續')) {
+        } else if (lines[23].str.includes('按任意鍵繼續')) {
           await this.send(`${key.Enter}`);
-        } else if ((getLine(22).str + getLine(23).str).toLowerCase().includes('y/n')) {
+        } else if ((lines[22].str + lines[23].str).toLowerCase().includes('y/n')) {
           console.info(`Unknown login state: \n${this.screen}`);
           await this.send(`y${key.Enter}`);
-        } else if (getLine(23).str.includes('我是')) {
+        } else if (lines[23].str.includes('我是')) {
           break;
         } else {
           console.info(`Unknown login state: \n${this.screen}`);
@@ -295,7 +299,7 @@ class Bot extends EventEmitter {
    * @deprecated
    */
   private checkArticleWithHeader(): boolean {
-    const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
+    const authorArea = substrWidth('dbcs', this.line[0].str, 0, 6).trim();
     return authorArea === '作者';
   }
 
@@ -496,7 +500,7 @@ class Bot extends EventEmitter {
 
   get currentBoardname(): string|undefined {
     const boardRe = /【(?!看板列表).*】.*《(?<boardname>.*)》/;
-    const match = boardRe.exec(this.getLine(0).str);
+    const match = boardRe.exec(this.line[0].str);
     if (match) {
       return match.groups.boardname;
     } else {
@@ -525,7 +529,6 @@ class Bot extends EventEmitter {
   }
 
   async enterByOffset(offsets: number[]= []): Promise<boolean> {
-    const { getLine } = this;
     let result = true;
     offsets.forEach(async offset => {
       if (offset === 0) {
@@ -533,12 +536,12 @@ class Bot extends EventEmitter {
       }
       if (offset < 0) {
         for (let i = 22; i >= 3; i--) {
-          let lastOffset = substrWidth('dbcs', getLine(i).str, 3, 4).trim();
+          let lastOffset = substrWidth('dbcs', this.line[i].str, 3, 4).trim();
           if (lastOffset.length > 0) {
             offset += +lastOffset + 1;
             break;
           }
-          lastOffset = substrWidth('dbcs', getLine(i).str, 15, 2).trim();
+          lastOffset = substrWidth('dbcs', this.line[i].str, 15, 2).trim();
           if (lastOffset.length > 0) {
             offset += +lastOffset + 1;
             break;
