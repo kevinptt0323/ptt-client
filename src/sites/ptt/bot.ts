@@ -113,16 +113,16 @@ class Bot extends EventEmitter {
     return this.term.state.getLine(n);
   }
 
-  async getLines() {
+  async getContent(): Promise<Line[]> {
     const lines = [];
 
-    lines.push(this.line[0].str);
+    lines.push(this.line[0]);
 
     let sentPgDown = false;
     while (!this.line[23].str.includes('100%')
         && !this.line[23].str.includes('此文章無內容')) {
       for (let i = 1; i < 23; i++) {
-        lines.push(this.line[i].str);
+        lines.push(this.line[i]);
       }
       await this.send(key.PgDown);
       sentPgDown = true;
@@ -130,15 +130,15 @@ class Bot extends EventEmitter {
 
     const lastLine = lines[lines.length - 1];
     for (let i = 0; i < 23; i++) {
-      if (this.line[i].str === lastLine) {
+      if (this.line[i].str === lastLine.str) {
         for (let j = i + 1; j < 23; j++) {
-          lines.push(this.line[j].str);
+          lines.push(this.line[j]);
         }
         break;
       }
     }
 
-    while (lines.length > 0 && lines[lines.length - 1] === '') {
+    while (lines.length > 0 && lines[lines.length - 1].str === '') {
       lines.pop();
     }
 
@@ -146,6 +146,14 @@ class Bot extends EventEmitter {
       await this.send(key.Home);
     }
     return lines;
+  }
+
+  /**
+   * @deprecated
+   */
+  async getLines() {
+    const lines = await this.getContent();
+    return lines.map(line => line.str);
   }
 
   send(msg: string): Promise<boolean> {

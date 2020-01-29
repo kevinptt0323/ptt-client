@@ -48,7 +48,7 @@ describe('Mail', () => {
           .getOne();
 
       assert.strictEqual(mail.id, 1);
-      assert(mail.data.length > 0);
+      assert(mail.content.length > 0);
     });
   });
 

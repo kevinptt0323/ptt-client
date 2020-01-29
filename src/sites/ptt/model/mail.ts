@@ -1,3 +1,4 @@
+import {Line} from '../../../common/Line';
 import {ObjectLiteral} from '../../../common/ObjectLiteral';
 import {SelectQueryBuilder} from '../../../utils/query-builder/SelectQueryBuilder';
 import {keymap as key} from '../../../utils';
@@ -10,25 +11,39 @@ export class Mail {
   author: string;
   status: string;
   title: string;
-  private _data: string[] = [];
+  private _content: Line[] = [];
+
+  get content(): ReadonlyArray<Line> {
+    return this._content;
+  }
+
+  set content(content: ReadonlyArray<Line>) {
+    this._content = content.slice();
+  }
 
   get data(): ReadonlyArray<string> {
-    return this._data;
+    return this._content.map(content => content.str);
   }
+
+  /**
+   * @deprecated
+   */
   set data(data: ReadonlyArray<string>) {
-    this._data = data.slice();
+    console.warn("Should not set Mail.data/Mail.lines directly. " +
+                 "Use Mail.content instead");
   }
 
   constructor() {
   }
 
-  static fromLine(line: string): Mail {
+  static fromLine(line: Line): Mail {
     const mail = new Mail();
-    mail.id     = +substrWidth('dbcs', line, 1,  5).trim();
-    mail.date   = substrWidth('dbcs', line,  9,  5).trim();
-    mail.author = substrWidth('dbcs', line, 15, 12).trim();
-    mail.status = substrWidth('dbcs', line, 30,  2).trim();
-    mail.title  = substrWidth('dbcs', line, 33    ).trim();
+    const {str} = line;
+    mail.id     = +substrWidth('dbcs', str, 1,  5).trim();
+    mail.date   = substrWidth('dbcs', str,  9,  5).trim();
+    mail.author = substrWidth('dbcs', str, 15, 12).trim();
+    mail.status = substrWidth('dbcs', str, 30,  2).trim();
+    mail.title  = substrWidth('dbcs', str, 33    ).trim();
     return mail;
   }
 
@@ -37,10 +52,10 @@ export class Mail {
   }
 
   hasHeader(): boolean {
-    if (this.data.length === 0) {
+    if (this.content.length === 0) {
       return false;
     }
-    const authorArea = substrWidth('dbcs', this.data[0], 0, 6).trim();
+    const authorArea = substrWidth('dbcs', this.content[0].str, 0, 6).trim();
     return authorArea === '作者';
   }
 }
@@ -95,8 +110,8 @@ export class MailSelectQueryBuilder extends SelectQueryBuilder<Mail> {
 
     const mails: Mail[] = [];
     for (let i = 3; i <= 22; i++) {
-      const line = this.bot.line[i].str;
-      if (line.trim() === '') {
+      const line = this.bot.line[i];
+      if (line.str.trim() === '') {
         break;
       }
       const mail = Mail.fromLine(line);
@@ -117,7 +132,7 @@ export class MailSelectQueryBuilder extends SelectQueryBuilder<Mail> {
 
     const mail = new Mail();
     mail.id = this.id;
-    mail.data = await this.bot.getLines();
+    mail.content = await this.bot.getContent();
 
     if (mail.hasHeader()) {
       mail.author    = substrWidth('dbcs', this.bot.line[0].str, 7, 50).trim();

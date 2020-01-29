@@ -1,3 +1,4 @@
+import {Line} from '../../../common/Line';
 import {ObjectLiteral} from '../../../common/ObjectLiteral';
 import {SelectQueryBuilder} from '../../../utils/query-builder/SelectQueryBuilder';
 import {keymap as key} from '../../../utils';
@@ -13,27 +14,41 @@ export class Article {
   status: string;
   title: string;
   fixed: boolean;
-  private _data: string[] = [];
+  private _content: Line[] = [];
+
+  get content(): ReadonlyArray<Line> {
+    return this._content;
+  }
+
+  set content(content: ReadonlyArray<Line>) {
+    this._content = content.slice();
+  }
 
   get data(): ReadonlyArray<string> {
-    return this._data;
+    return this._content.map(content => content.str);
   }
+
+  /**
+   * @deprecated
+   */
   set data(data: ReadonlyArray<string>) {
-    this._data = data.slice();
+    console.warn("Should not set Mail.data/Mail.lines directly. " +
+                 "Use Mail.content instead");
   }
 
   constructor() {
   }
 
-  static fromLine(line: string): Article {
+  static fromLine(line: Line): Article {
     const article = new Article();
-    article.id     = +substrWidth('dbcs', line, 1,   7).trim();
-    article.push   = substrWidth('dbcs', line, 9,   2).trim();
-    article.date   = substrWidth('dbcs', line, 11,  5).trim();
-    article.author = substrWidth('dbcs', line, 17, 12).trim();
-    article.status = substrWidth('dbcs', line, 30,  2).trim();
-    article.title  = substrWidth('dbcs', line, 32    ).trim();
-    article.fixed  = substrWidth('dbcs', line, 1,   7).trim().includes('★');
+    const {str} = line;
+    article.id     = +substrWidth('dbcs', str, 1,   7).trim();
+    article.push   = substrWidth('dbcs', str, 9,   2).trim();
+    article.date   = substrWidth('dbcs', str, 11,  5).trim();
+    article.author = substrWidth('dbcs', str, 17, 12).trim();
+    article.status = substrWidth('dbcs', str, 30,  2).trim();
+    article.title  = substrWidth('dbcs', str, 32    ).trim();
+    article.fixed  = substrWidth('dbcs', str, 1,   7).trim().includes('★');
     return article;
   }
 
@@ -42,10 +57,10 @@ export class Article {
   }
 
   hasHeader(): boolean {
-    if (this.data.length === 0) {
+    if (this.content.length === 0) {
       return false;
     }
-    const authorArea = substrWidth('dbcs', this.data[0], 0, 6).trim();
+    const authorArea = substrWidth('dbcs', this.content[0].str, 0, 6).trim();
     return authorArea === '作者';
   }
 }
@@ -113,8 +128,8 @@ export class ArticleSelectQueryBuilder extends SelectQueryBuilder<Article> {
 
     const articles: Article[] = [];
     for (let i = 3; i <= 22; i++) {
-      const line = this.bot.line[i].str;
-      if (line.trim() === '') {
+      const line = this.bot.line[i];
+      if (line.str.trim() === '') {
         break;
       }
       const article = Article.fromLine(line);
@@ -150,7 +165,7 @@ export class ArticleSelectQueryBuilder extends SelectQueryBuilder<Article> {
     const article = new Article();
     article.id = this.id;
     article.boardname = this.boardname;
-    article.data = await this.bot.getLines();
+    article.content = await this.bot.getContent();
 
     if (article.hasHeader()) {
       article.author    = substrWidth('dbcs', this.bot.line[0].str, 7, 50).trim();

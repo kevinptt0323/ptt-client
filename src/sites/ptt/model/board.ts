@@ -1,3 +1,4 @@
+import {Line} from '../../../common/Line';
 import {SelectQueryBuilder} from '../../../utils/query-builder/SelectQueryBuilder';
 import {keymap as key} from '../../../utils';
 import {substrWidth} from '../../../utils/char';
@@ -18,43 +19,45 @@ export class Board {
     this.name = name;
   }
 
-  static fromLine(line: string): Board {
+  static fromLine(line: Line): Board {
     const board = new Board();
-    board.id        = +substrWidth('dbcs', line,  3,  4).trim();
-    board.unread    = substrWidth('dbcs', line,  8,  2).trim() === 'ˇ';
-    board.name      = substrWidth('dbcs', line, 10, 12).trim();
-    board.category  = substrWidth('dbcs', line, 23,  4).trim();
-    board.flag      = substrWidth('dbcs', line, 28,  2).trim();
+    const {str} = line;
+    board.id        = +substrWidth('dbcs', str,  3,  4).trim();
+    board.unread    = substrWidth('dbcs', str,  8,  2).trim() === 'ˇ';
+    board.name      = substrWidth('dbcs', str, 10, 12).trim();
+    board.category  = substrWidth('dbcs', str, 23,  4).trim();
+    board.flag      = substrWidth('dbcs', str, 28,  2).trim();
     switch (board.flag) {
       case '□':
-        board.title  = substrWidth('dbcs', line, 30).replace(/\s+$/, '');
+        board.title  = substrWidth('dbcs', str, 30).replace(/\s+$/, '');
         board.folder = true;
         break;
       case '--':
         board.divider = true;
         break;
       case 'Σ':
-        board.title  = substrWidth('dbcs', line, 30, 31).replace(/\s+$/, '');
-        board.users  = substrWidth('dbcs', line, 62,  5).trim();
-        board.admin  = substrWidth('dbcs', line, 67    ).trim();
+        board.title  = substrWidth('dbcs', str, 30, 31).replace(/\s+$/, '');
+        board.users  = substrWidth('dbcs', str, 62,  5).trim();
+        board.admin  = substrWidth('dbcs', str, 67    ).trim();
         board.folder = true;
         break;
       case '◎':
-        board.title = substrWidth('dbcs', line, 30, 31).replace(/\s+$/, '');
-        board.users = substrWidth('dbcs', line, 62,  5).trim();
-        board.admin = substrWidth('dbcs', line, 67    ).trim();
+        board.title = substrWidth('dbcs', str, 30, 31).replace(/\s+$/, '');
+        board.users = substrWidth('dbcs', str, 62,  5).trim();
+        board.admin = substrWidth('dbcs', str, 67    ).trim();
         break;
       default:
-        console.warn(`Unknown board flag. line: "${line}"`);
+        console.warn(`Unknown board flag. line.str: "${str}"`);
     }
     return board;
   }
 
-  static fromClassLine(line: string): Board {
+  static fromClassLine(line: Line): Board {
     const board = new Board();
-    board.id     = +substrWidth('dbcs', line, 15,  2);
-    board.title  = substrWidth('dbcs', line, 20, 29).replace(/\s+$/, '');
-    board.admin  = substrWidth('dbcs', line, 61).trim();
+    const {str} = line;
+    board.id     = +substrWidth('dbcs', str, 15,  2);
+    board.title  = substrWidth('dbcs', str, 20, 29).replace(/\s+$/, '');
+    board.admin  = substrWidth('dbcs', str, 61).trim();
     board.folder = true;
     return board;
   }
@@ -130,8 +133,8 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
     if (found) {
       if (this.entry === Entry.Class && this.offsets.length === 0) {
         for (let i = 7; i < 23; i++) {
-          const line = this.bot.line[i].str;
-          if (line.trim() === '') {
+          const line = this.bot.line[i];
+          if (line.str.trim() === '') {
             break;
           }
           const board = Board.fromClassLine(line);
@@ -141,8 +144,8 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
         while (true) {
           let stopLoop = false;
           for (let i = 3; i < 23; i++) {
-            const line = this.bot.line[i].str;
-            if (line.trim() === '') {
+            const line = this.bot.line[i];
+            if (line.str.trim() === '') {
               stopLoop = true;
               break;
             }
@@ -185,8 +188,8 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
           width += 1;
       }
       while (true) {
-        const line = this.bot.line[row + 3].str;
-        const boardname = substrWidth('dbcs', line, col * width, width).trim();
+        const line = this.bot.line[row + 3];
+        const boardname = substrWidth('dbcs', line.str, col * width, width).trim();
         if (boardname !== '') {
           boards.push(new Board(boardname));
         } else {
@@ -208,8 +211,8 @@ export class BoardSelectQueryBuilder extends SelectQueryBuilder<Board> {
         }
       }
     } else {
-      const searchLine = this.bot.line[1].str;
-      const searchInput = substrWidth('dbcs', searchLine, 34, 15).trim();
+      const searchStr = this.bot.line[1].str;
+      const searchInput = substrWidth('dbcs', searchStr, 34, 15).trim();
       if (searchInput.toLowerCase().indexOf(prefix.toLowerCase()) === 0) {
         boards.push(new Board(searchInput));
       }
