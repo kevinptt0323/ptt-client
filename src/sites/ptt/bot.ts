@@ -291,6 +291,9 @@ class Bot extends EventEmitter {
     }
   }
 
+  /**
+   * @deprecated
+   */
   private checkArticleWithHeader(): boolean {
     const authorArea = substrWidth('dbcs', this.getLine(0).str, 0, 6).trim();
     return authorArea === '作者';
@@ -426,6 +429,9 @@ class Bot extends EventEmitter {
     return favorites;
   }
 
+  /**
+   * @deprecated
+   */
   async getMails(offset: number= 0) {
     await this.enterMail();
     if (offset > 0) {
@@ -452,6 +458,9 @@ class Bot extends EventEmitter {
     return mails.reverse();
   }
 
+  /**
+   * @deprecated
+   */
   async getMail(sn: number) {
     await this.enterMail();
     const { getLine } = this;
